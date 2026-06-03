@@ -399,3 +399,13 @@
 - Checked repository visibility with `gh repo view dexteryeh/godot-models`; GitHub could not resolve that repository.
 - Attempted `gh repo create dexteryeh/godot-models --public --source=. --remote=origin --push`; GitHub rejected it because `dexteryeh-crypto cannot create a repository for dexteryeh`.
 - Result: local commit is ready, but pushing to the requested URL is blocked by missing access to the `dexteryeh` namespace or a missing repository under that owner.
+
+2026-06-03 fixed GitHub push by using authenticated owner
+
+- User asked to fix the failed push after `https://github.com/dexteryeh/godot-models.git` returned `Repository not found`.
+- Rechecked git state: `/home/dexter/godot` is on branch `main`, original `origin` pointed to `https://github.com/dexteryeh/godot-models.git`, and GitHub CLI is authenticated as `dexteryeh-crypto`.
+- Verified `dexteryeh/godot-models` is still not visible/accessible, and `git ls-remote https://github.com/dexteryeh/godot-models.git` still fails with `Repository not found`.
+- Created the accessible repository `https://github.com/dexteryeh-crypto/godot-models` with `gh repo create dexteryeh-crypto/godot-models --public --source=. --remote=origin --push`; repo creation succeeded but `gh` could not replace the existing `origin` remote.
+- Changed `origin` to `https://github.com/dexteryeh-crypto/godot-models.git` with `git remote set-url origin ...`.
+- Pushed `main` successfully with `git push -u origin main`; branch now tracks `origin/main`.
+- Important note: this fixes publishing through the currently authenticated GitHub account. It does not push to `dexteryeh/godot-models`, because this machine is not authenticated as an account with access to create or push under the `dexteryeh` owner.
