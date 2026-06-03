@@ -386,3 +386,10 @@
 - Regenerated `/home/dexter/steam/model.png` with a temporary Xvfb capture helper and visually inspected it; the smaller white toe pieces are gone.
 - Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
 - Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 5 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript errors and exited by expected timeout `EXIT_CODE=124`.
+
+2026-06-03 push godot folder to GitHub
+
+- User asked to push all files in `/home/dexter/godot` to `https://github.com/dexteryeh/godot-models.git`.
+- Checked `/home/dexter/godot` and confirmed it is already a git repository on branch `main` with `origin` set to the requested URL.
+- Checked repository state before pushing. Most files are already tracked; `sources/godot-4.6.3-stable` is tracked as a gitlink/embedded git checkout rather than ordinary files, and it currently has untracked `modules/mcp/` inside the nested checkout.
+- Proceeding to add, commit, and push the parent repository contents. The nested checkout contents are not ordinary parent-repo files unless the gitlink arrangement is changed.
