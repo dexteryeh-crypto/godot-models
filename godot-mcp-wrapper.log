@@ -1,0 +1,39 @@
+2026-06-02 07:56:00 +0800 pid=1963341 ppid=1963340 wrapper start cwd=/home/dexter/godot
+2026-06-02 07:56:00 +0800 pid=1963341 ppid=1963340 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 07:56:00 +0800 pid=1963341 ppid=1963340 python exit status=0
+2026-06-02 07:56:44 +0800 pid=1963375 ppid=1963374 wrapper start cwd=/home/dexter/godot
+2026-06-02 07:56:44 +0800 pid=1963375 ppid=1963374 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 07:56:44 +0800 pid=1963375 ppid=1963374 python exit status=0
+2026-06-02 11:06:29 +0800 pid=1963842 ppid=1963748 wrapper start cwd=/home/dexter/godot
+2026-06-02 11:06:29 +0800 pid=1963842 ppid=1963748 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 11:43:19 +0800 pid=1964273 ppid=1964270 wrapper start cwd=/home/dexter/godot
+2026-06-02 11:43:19 +0800 pid=1964273 ppid=1964270 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 11:43:19 +0800 pid=1964279 ppid=1964272 wrapper start cwd=/home/dexter/godot
+2026-06-02 11:43:19 +0800 pid=1964279 ppid=1964272 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 11:43:19 +0800 pid=1964273 ppid=1964270 python exit status=0
+2026-06-02 11:43:19 +0800 pid=1964279 ppid=1964272 python exit status=0
+2026-06-02 14:59:02 +0800 pid=1965783 ppid=1965688 wrapper start cwd=/home/dexter/godot
+2026-06-02 14:59:02 +0800 pid=1965783 ppid=1965688 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:06:49 +0800 pid=1966314 ppid=1966313 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:06:49 +0800 pid=1966314 ppid=1966313 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:06:49 +0800 pid=1966314 ppid=1966313 python exit status=0
+2026-06-02 15:07:06 +0800 pid=1966345 ppid=1966344 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:07:06 +0800 pid=1966345 ppid=1966344 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:07:07 +0800 pid=1966345 ppid=1966344 python exit status=0
+2026-06-02 15:14:23 +0800 pid=1966534 ppid=1966533 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:14:23 +0800 pid=1966534 ppid=1966533 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:14:23 +0800 pid=1966534 ppid=1966533 python exit status=0
+2026-06-02 15:16:03 +0800 pid=1966608 ppid=1966607 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:16:03 +0800 pid=1966608 ppid=1966607 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:16:04 +0800 pid=1966608 ppid=1966607 python exit status=0
+2026-06-02 15:17:46 +0800 pid=1966882 ppid=1966771 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:17:46 +0800 pid=1966882 ppid=1966771 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:19:54 +0800 pid=1967089 ppid=1967088 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:19:54 +0800 pid=1967089 ppid=1967088 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:19:57 +0800 pid=1967089 ppid=1967088 python exit status=0
+2026-06-02 15:23:15 +0800 pid=1967200 ppid=1967199 wrapper start cwd=/home/dexter/godot
+2026-06-02 15:23:15 +0800 pid=1967200 ppid=1967199 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 15:23:18 +0800 pid=1967200 ppid=1967199 python exit status=0
+2026-06-02 17:33:53 +0800 pid=1967843 ppid=1967842 wrapper start cwd=/home/dexter/godot
+2026-06-02 17:33:53 +0800 pid=1967843 ppid=1967842 launch python host=127.0.0.1 port=9080 auto_launch=1 godot_bin=/home/dexter/godot/sources/godot-4.6.3-stable/bin/godot.linuxbsd.editor.dev.x86_64 project=/home/dexter/steam/games/the-moon
+2026-06-02 17:33:56 +0800 pid=1967843 ppid=1967842 python exit status=0
