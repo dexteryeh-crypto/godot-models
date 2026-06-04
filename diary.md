@@ -409,3 +409,86 @@
 - Changed `origin` to `https://github.com/dexteryeh-crypto/godot-models.git` with `git remote set-url origin ...`.
 - Pushed `main` successfully with `git push -u origin main`; branch now tracks `origin/main`.
 - Important note: this fixes publishing through the currently authenticated GitHub account. It does not push to `dexteryeh/godot-models`, because this machine is not authenticated as an account with access to create or push under the `dexteryeh` owner.
+
+2026-06-03 human face texture inside spacesuit helmet
+
+- User asked to create an image of a human face and texture it on the head inside the helmet.
+- Used the built-in image generation tool through the `imagegen` workflow to create a generic realistic front-facing adult face texture with neutral expression and no logos/text.
+- Copied the generated bitmap from `/home/dexter/.codex/generated_images/019e856d-3466-7b41-9478-4e13fd2e1627/ig_0c6279504f2585bb016a1f8d8aad608191a4bbf59fc2dd607d.png` into the project as `/home/dexter/steam/games/the-moon/spacesuit_face_texture.png`.
+- Preserved the original copied face bitmap as `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source.png`.
+- Converted `/home/dexter/steam/games/the-moon/spacesuit_face_texture.png` to a 768x768 RGBA oval-masked face texture so the square portrait background does not appear as a floating card in the helmet.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_skin_material.tres` for the astronaut head volume.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_face_texture_panel.gd`, which loads the PNG at runtime with `Image.load()` and builds an `ImageTexture` material on the face panel.
+- Root cause noted during verification: a static `Texture2D` resource reference to the PNG failed because this model-viewer launch has no imported texture cache for the new image. Runtime `Image.load()` succeeded, so the scene now avoids the broken static imported-resource dependency.
+- Patched `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` to add `AstronautHead_Mesh`, `AstronautFace_TexturePanel`, a dedicated `QuadMesh_face`, and a script ext_resource for the runtime texture loader.
+- Moved `Helmet_InnerShadow_Cavity` behind the new head so the face remains visible through the helmet bubble.
+- Created a temporary `/home/dexter/steam/tools/test_png_image_load.gd` script to verify Godot can load the PNG bytes directly; it returned `IMAGE_LOAD_ERR=0` and was removed.
+- Created a temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` offscreen `SubViewport` capture helper to regenerate `/home/dexter/steam/model.png`; it was removed after capture.
+- Visual verification: inspected `/home/dexter/steam/model.png`; the face is visible inside the helmet, scaled down, oval-masked, and no longer rendered as a large square portrait panel.
+
+2026-06-03 corrected face placement onto head inside helmet
+
+- User reported the generated face was rendered outside the helmet and floating in the air instead of on the head inside the helmet.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and confirmed the previous implementation used a separate `AstronautFace_TexturePanel` quad at the front of the helmet volume.
+- Root cause: although the quad was positioned near the head surface, transparent rendering made it read as a flat overlay/airborne plate rather than texture on the head.
+- Removed the separate `AstronautFace_TexturePanel` node and removed the unused `QuadMesh_face` subresource.
+- Replaced `/home/dexter/steam/games/the-moon/spacesuit_face_texture_panel.gd` with `/home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd`.
+- Attached the runtime texture loader script directly to `AstronautHead_Mesh` so the generated face bitmap is applied to the head mesh itself.
+- Reduced and repositioned `AstronautHead_Mesh` to sit lower and farther inside the helmet bubble: the head now sits behind the helmet glass and partially within the collar/ring volume instead of projecting in front of the visor.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the face texture is now on the head sphere inside the helmet, not a separate floating quad.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-03 removed duplicate black helmet head
+
+- User reported `/home/dexter/steam/model.png` showed two heads: one black and one textured with the human face.
+- Inspected the scene and confirmed there was only one new textured head, `AstronautHead_Mesh`, but the old `Helmet_InnerShadow_Cavity` was still present as a dark sphere behind it.
+- Root cause: `Helmet_InnerShadow_Cavity` reused `SphereMesh_fh44u` with `spacesuit_dark_inner_glass.tres`, so after adding a real human head it visually read as a second black head inside the helmet.
+- Removed the `Helmet_InnerShadow_Cavity` node from `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the duplicate black head is gone and only the textured head remains inside the helmet.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-03 enlarged astronaut head inside helmet
+
+- User asked for a bigger head.
+- Inspected `AstronautHead_Mesh` in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`; its prior transform scale was `0.17, 0.205, 0.17` at position `0, 1.69, -0.06`.
+- Enlarged `AstronautHead_Mesh` to transform scale `0.215, 0.255, 0.215` and adjusted its position to `0, 1.675, -0.055` so the larger head remains inside the helmet bubble and seated behind the helmet ring.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the head is larger and still inside the helmet, with the lower face naturally partly hidden by the helmet collar/ring.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-03 scaled face head to near helmet radius
+
+- User clarified that the head rendering the human face should be bigger, with a radius just 2 cm less than the helmet radius.
+- Inspected the helmet and head transforms in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`.
+- Helmet glass transform scale is `0.42, 0.38, 0.42`, so I treated the requested 2 cm clearance as `0.02` scene units under the helmet radius.
+- Updated `AstronautHead_Mesh` from transform scale `0.215, 0.255, 0.215` at position `0, 1.675, -0.055` to scale `0.40, 0.36, 0.40` at position `0, 1.72, 0`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the face-rendered head now nearly fills the helmet bubble while the glass rim remains visible around it.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-04 scaled face head to 5 cm under helmet radius
+
+- User asked to make the head rendering the human face smaller, like 5 cm less in radius than the helmet.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`; helmet glass scale remains `0.42, 0.38, 0.42`, and the current face head scale was `0.40, 0.36, 0.40`.
+- Treated 5 cm clearance as `0.05` scene units under the helmet radius and updated `AstronautHead_Mesh` to scale `0.37, 0.33, 0.37` at position `0, 1.72, 0`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the textured head is smaller than the prior 2 cm-clearance version and remains inside the helmet bubble.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-04 reduced face texture content to 80 percent
+
+- User asked to revise the face image to be 80% of its current size and re-texture it onto the head.
+- Inspected `/home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd` and confirmed the head material loads `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source.png`.
+- Preserved the full-size source texture as `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source_fullsize.png`.
+- Rebuilt `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source.png` from the full-size backup by scaling the portrait content to 80% inside the original 1254x1254 texture canvas and filling the surrounding area with a blurred copy of the original image to avoid a hard border.
+- Left `AstronautHead_Mesh` scale unchanged at the 5 cm-under-helmet-radius setting `0.37, 0.33, 0.37`; only the face texture content was reduced.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the facial features are smaller on the same head mesh and remain textured on the head inside the helmet.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-04 reduced face texture area another 80 percent
+
+- User interrupted and clarified the request: revise the face image texture area on the head to be 80% compared to now, then re-texture it to the head.
+- Checked for leftover processes from the interrupted turn and found a live Godot model-viewer process at PID `1998616`; stopped it before continuing.
+- Confirmed `/home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd` still loads `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source.png` onto `AstronautHead_Mesh`.
+- Rebuilt `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source.png` from the preserved full-size backup `/home/dexter/steam/games/the-moon/spacesuit_face_texture_source_fullsize.png`.
+- Because the current texture area was already 80% of the original, scaled the new face content to 64% of the original canvas, i.e. 80% of the current texture area. The texture canvas remained 1254x1254 and the portrait content became 803x803.
+- Left the head mesh scale unchanged at `0.37, 0.33, 0.37`; only the texture area on the head changed.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the facial texture area is smaller on the same head inside the helmet.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
