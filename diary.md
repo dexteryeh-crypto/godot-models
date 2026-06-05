@@ -492,3 +492,14 @@
 - Left the head mesh scale unchanged at `0.37, 0.33, 0.37`; only the texture area on the head changed.
 - Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the facial texture area is smaller on the same head inside the helmet.
 - Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 rounded non-cubic torso revision
+
+- User reported that the spacesuit body shape was cubic and unrealistic.
+- Checked for leftover Godot/capture processes after the interrupted turn; no capture helper or Godot renderer process was left running.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and found the root cause: both `BodySuit_Mesh` and `HardTorso_Mesh` were using `BoxMesh_4gg7y`, with `HardTorso_Mesh` forming a large flat rectangular front block.
+- First replaced `BodySuit_Mesh` with `CapsuleMesh_jvpx1` and `HardTorso_Mesh` with a scaled sphere to remove the box silhouette, then rendered `/home/dexter/steam/model.png`.
+- Visual check of the first pass showed the cube was gone, but the hard torso read as an oversized oval pillow and the lower body capsule protruded below the waist ring.
+- Revised the torso again: `BodySuit_Mesh` is now a shorter raised capsule at scale `0.40, 0.32, 0.32` and position `0, 1.06, 0.015`; `HardTorso_Mesh` is now a vertical rounded capsule at scale `0.48, 0.32, 0.34` and position `0, 1.17, -0.035`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the torso now reads as a rounded pressure-suit body instead of a cubic block, and the waist protrusion from the first pass is gone.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
