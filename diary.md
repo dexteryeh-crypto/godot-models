@@ -503,3 +503,1077 @@
 - Revised the torso again: `BodySuit_Mesh` is now a shorter raised capsule at scale `0.40, 0.32, 0.32` and position `0, 1.06, 0.015`; `HardTorso_Mesh` is now a vertical rounded capsule at scale `0.48, 0.32, 0.34` and position `0, 1.17, -0.035`.
 - Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the torso now reads as a rounded pressure-suit body instead of a cubic block, and the waist protrusion from the first pass is gone.
 - Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 first high-quality spacesuit refinement pass from model-creationmd
+
+- User asked to refer to `./model-creation.md` and refine the spacesuit model to the high-quality level described there. The actual local file is `/home/dexter/godot/model-creationmd`, so I treated that as the intended referenced specification.
+- Checked for leftover Godot/capture processes from the interrupted turn; none were running.
+- Read `/home/dexter/godot/model-creationmd` and derived the main quality requirements: non-boxy rounded geometry, distinct PBR material tuning, local triplanar-style fabric projection, procedural fabric surface detail, rigid mechanical attachments/details, and runtime/render verification. The full spec also calls for a true procedural ArrayMesh/SurfaceTool, tangent generation, skeletal weights, and LOD/culling architecture; the current scene is still a static primitive-node scene, so this pass is progress rather than full completion of the complete architecture.
+- Audited `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and current material files. The previous torso cube problem was already partly fixed, but the model still lacked visible high-quality details and material enhancement.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` and attached it to the root `Spacesuit3D` node. The script safely checks runtime property availability before setting material properties, then tunes fabric, shell, metal, and visor materials toward the PBR requirements in the spec.
+- In the quality script, added local triplanar settings where supported, kept world triplanar disabled to avoid texture swimming on a moving suit, and added a guarded procedural `NoiseTexture2D`/`FastNoiseLite` normal texture for suit fabric.
+- Added attached torso detail nodes to `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`: `Torso_UpperPressureSeal`, `Torso_LowerPressureSeal`, a compact `ChestControlPanel_Main`, display strip, red/blue/green buttons, a label strip, and left/right soft seam strips.
+- First render showed the side seam strips read too detached and the fabric normal map was too strong, producing visible black speckle artifacts. Reduced the procedural normal strength/frequency and moved the seam strips onto the front torso surface.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the suit now has a rounded torso, compact chest controls, pressure seals, subtler material enhancement, and no new load errors.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 5 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural shoulder soft-shell and torso silhouette pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the current front render and confirmed the new shoulder soft-shell nodes were attached, but the hard torso still read too cubic from the front.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_shoulder_soft_shell.gd` for shoulder blend and underarm gusset meshes.
+- Wired the shoulder soft-shell generator to `ShoulderTorsoBlend_L`, `ShoulderTorsoBlend_R`, `ShoulderUnderarmGusset_L`, and `ShoulderUnderarmGusset_R` in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`.
+- The shoulder soft-shell script uses `SurfaceTool`, UVs before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` so the shoulder blend and underarm gusset nodes are part of the structural mesh-array audit.
+- Revised `/home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd` to reduce the cubic body shape: increased segment density, narrowed the waist, tapered the upper torso, added rounded ribcage fullness, added a front sternum contour, reduced the flat back, and softened the shoulder roll.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen capture helper; final render timestamp was `2026-06-05 23:50:29.903976865 +0800` and file size was `307696` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the torso now reads as a rounded pressure shell rather than a rectangular block, with the chest panel and shoulder hose details still attached.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural hollow shoulder bearing pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for a visual quality pass, adapted to this spacesuit asset: inspect the current model, identify primitive-looking visible forms, replace the worst offender with generated geometry, then verify by load, audit, and render.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and found `ShoulderBearing_L_Mesh` and `ShoulderBearing_R_Mesh` still used raw `CapsuleMesh` primitives.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_shoulder_bearing.gd`.
+- The shoulder bearing script generates a hollow flanged annular socket, not a capped solid puck, using `SurfaceTool`, UVs before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Wired the new script into `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` as `ExtResource("33_shoulder_bearing")`.
+- Assigned the generator to `ShoulderBearing_L_Mesh` with `bone_index = 4` and `ShoulderBearing_R_Mesh` with `bone_index = 6`, preserving their transforms so they stay aligned with the upper arms.
+- Changed the shoulder bearing material override from fabric to `spacesuit_ring_metal.tres` so the sockets read as hard mechanical shoulder bearings.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include both generated shoulder bearing nodes.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Recreated a temporary offscreen capture helper to regenerate `/home/dexter/steam/model.png`; first capture attempt exposed helper camera issues, then the helper was corrected with `Camera3D.current = true` and `look_at_from_position()`.
+- Final front render timestamp was `2026-06-05 23:55:08.476866407 +0800` and file size was `327224` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the shoulder sockets are now attached hollow metal bearing assemblies aligned to the upper arms instead of primitive capsule blobs.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural pressure-glove palm pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for another visible model-quality pass after inspecting the current scene and render.
+- Identified `Glove_L_Mesh` and `Glove_R_Mesh` as remaining front-visible raw `SphereMesh` primitives while the fingers, fingertip armor, and palm pads were already generated.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_glove_shell.gd`.
+- The glove shell script generates an asymmetric pressure-glove palm with a broader knuckle side, flattened wrist side, front palm volume, UVs before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Wired the generator into `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` as `ExtResource("34_glove_shell")`.
+- Assigned the generator to `Glove_L_Mesh` with `bone_index = 5` and `Glove_R_Mesh` with `bone_index = 7`.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include both generated glove palm nodes.
+- First render showed the generated glove palms were too large because the old Godot `SphereMesh` behaved like unit diameter while the new generator emitted unit radius. Added an exported `radius = 0.50` multiplier to preserve the existing footprint.
+- Verification after scaling: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification after scaling: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-05 23:59:05.354200633 +0800` and file size was `326289` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the glove palms now remain near the original size while no longer reading as simple spheres.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 procedural PLSS side-canister pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for another visible model-quality pass, focused on remaining primitive-heavy life-support backpack details.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and found `Backpack_SideCanister_1` and `Backpack_SideCanister_2` were still raw `CylinderMesh` primitives.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_canister.gd`.
+- The canister script generates capped PLSS side cylinders with rounded end bevels, recessed center profile, raised rib bands, UVs before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Wired the generator into `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` as `ExtResource("35_canister")`.
+- Assigned the generator to both side canister nodes with `bone_index = 3`, preserving their transforms and backpack-panel material override.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include both generated side canister nodes.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-06 00:02:21.665598674 +0800` and file size was `327120` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the side canisters remain attached behind the shoulder area in the normal front view and do not introduce new floating or scale artifacts.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 procedural PLSS rounded attachment pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for another visible model-quality pass, focused on remaining raw `BoxMesh` PLSS/backpack attachments.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and found `Backpack_EmergencyHandle`, `Backpack_BackplateContactPad`, `Backpack_ShoulderHarness_L`, `Backpack_ShoulderHarness_R`, and `Backpack_UpperMountBracket` still used primitive box meshes.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_equipment_pad.gd`.
+- The equipment-pad script generates rounded rectangular equipment shells from six procedural faces, using `SurfaceTool`, UVs before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Wired the generator into `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` as `ExtResource("36_equipment_pad")`.
+- Assigned the generator to the emergency handle, backplate contact pad, left/right shoulder harness straps, and upper mount bracket, preserving their transforms and existing material overrides.
+- Tuned `boxiness` and `edge_ridge` per node so rubber straps remain softer/flatter while the metal bracket remains more compact and mechanical.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include all five generated backpack attachment nodes.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-06 00:06:17.026703465 +0800` and file size was `328529` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the normal front view remains stable with no new floating parts or scale spikes around the shoulder/backpack region.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 procedural chest-control detail pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for another visible model-quality pass, focused on the chest control panel detail cluster.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and found the generated `ChestControlPanel_Main` still carried primitive detail children: display strip, status lights, colored buttons, service ports, label strip, and caution strip.
+- Reused `/home/dexter/steam/games/the-moon/spacesuit_procedural_equipment_pad.gd` for shallow rectangular display/label/caution pieces and `/home/dexter/steam/games/the-moon/spacesuit_procedural_pad_shell.gd` for rounded indicator/button/port pieces.
+- Added a `radius` export to `spacesuit_procedural_pad_shell.gd`, defaulting to `1.0` so previous pad users keep their existing generated size.
+- Assigned the procedural scripts to `ChestControlPanel_Display`, `ChestControlPanel_StatusLight_1`, `ChestControlPanel_StatusLight_2`, `ChestControlPanel_Button_Red`, `ChestControlPanel_Button_Blue`, `ChestControlPanel_Button_Green`, `ChestControlPanel_LabelStrip`, `ChestControlPanel_Port_L`, `ChestControlPanel_Port_R`, and `ChestControlPanel_CautionStrip`.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include all ten generated chest-panel detail nodes.
+- First render showed the new round button/port nodes were too large because the old Godot sphere primitives behaved like unit diameter while the pad generator emitted unit radius. Set `radius = 0.50` on those chest indicator/button/port nodes to preserve their prior visual footprint.
+- Verification after correction: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification after correction: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-06 00:10:45.914087507 +0800` and file size was `328559` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the chest panel detail scale is controlled, the controls remain attached, and no new floating or oversized panel parts are visible.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 procedural neck seal and torso seam pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for another visible quality pass, focused on remaining primitive neck and torso seam elements.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and found `Neck_SoftPressureSleeve`, `Neck_UpperSealRing`, `Torso_LeftSoftSeam`, and `Torso_RightSoftSeam` still relied on raw cylinder/box primitives.
+- Reused existing procedural generators instead of adding unnecessary one-off scripts: `spacesuit_procedural_bellows_ring.gd` for the soft neck sleeve, `spacesuit_procedural_lock_ring.gd` for the upper neck seal, and `spacesuit_procedural_equipment_pad.gd` for the long soft seam strips.
+- Assigned generated scripts and tuned node-level parameters while preserving existing transforms and material overrides.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include both torso seam strips plus `Neck_SoftPressureSleeve` and `Neck_UpperSealRing`.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-06 00:14:05.405974410 +0800` and file size was `328606` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the converted seams and neck pieces remain attached with no new scale spikes or floating artifacts.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 expanded generated-mesh audit coverage pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Focused this pass on verification completeness rather than changing visible geometry, because several repeated generated component groups were still audited only through representative nodes.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` for repeated generated groups: torso stitches, elbow ribs, wrist rings, fingers, knee ribs, ankle rings, layered waist bearings, arm/leg restraint bands, palm pads, and fingertip armor.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` so every repeated generated node in those groups is now checked for vertex, normal, tangent, UV, index, bones, weights, and normalized 4-weight blocks.
+- Added the remaining torso stitch nodes, all elbow rib nodes, all wrist lock rings, all generated fingers, all knee rib nodes, all ankle rings, all layered waist bearings, all arm and leg restraint bands, both palm pads, and all fingertip armor pads to `REQUIRED_GENERATED_MESHES`.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0` under the expanded coverage.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- No geometry was changed in this pass, so `/home/dexter/steam/model.png` was not regenerated. The current render remains `/home/dexter/steam/model.png` at timestamp `2026-06-06 00:14:05.405974410 +0800` with size `328606` bytes.
+- No temporary capture helper was created in this pass.
+
+2026-06-06 procedural soft body-suit underlayer pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for a visible geometry pass, focused on `BodySuit_Mesh`, which still used a raw `CapsuleMesh` primitive under the hard torso shell.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_body_suit.gd`.
+- The body-suit script generates a compact soft pressure-garment underlayer using `SurfaceTool`, UVs before vertices, normalized 4-weight torso binding, indexed triangles, generated normals, generated tangents, and capped ends.
+- Wired the generator into `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` as `ExtResource("37_body_suit")` and assigned it to `BodySuit_Mesh`, preserving the existing transform and fabric material override.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include `BodySuit_Mesh`.
+- First render showed the generated underlayer was too bulky and read as a dangling abdomen part. Reduced the generator radius and vertical range.
+- Second render still made the underlayer too prominent. Tightened the radius again, shortened the local Y range, increased front flattening, and biased the generated mesh slightly toward the back of the torso.
+- Verification after the final correction: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification after the final correction: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-06 00:22:14.926730517 +0800` and file size was `326319` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the body-suit underlayer is now subtle, remains attached under the torso, and no longer dominates the abdomen.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 procedural torso pressure-seal pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the art-designer workflow for another visible geometry pass, focused on `Torso_UpperPressureSeal` and `Torso_LowerPressureSeal`, which still used raw `CylinderMesh` primitives around the generated torso shell.
+- Reused `/home/dexter/steam/games/the-moon/spacesuit_procedural_lock_ring.gd` for both seals because it already provides the required `SurfaceTool` pipeline, UVs before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Assigned the lock-ring generator to `Torso_UpperPressureSeal` and `Torso_LowerPressureSeal` in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`, preserving transforms and materials while tuning bevel and groove parameters per seal.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include both torso pressure seal nodes.
+- Verification: `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` reported `SPACESUIT_MESH_ARRAY_AUDIT=PASS` with `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png`; final render timestamp was `2026-06-06 00:25:45.183245260 +0800` and file size was `328600` bytes.
+- Visually inspected `/home/dexter/steam/model.png`; the converted torso pressure seals remain attached and stable in scale.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 tiered visibility and torso silhouette refinement pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` and confirmed the previous visibility range implementation used one uniform `80 m` cutoff for every mesh.
+- Checked Godot 4.6 extension metadata and confirmed `GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF` is available.
+- Updated `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` with tiered visibility ranges: tiny controls/stitches fade first, medium hardware/harness/hose details fade later, and main suit forms stay visible longest. This follows the HLOD/visibility-range portion of the spec without using unsupported automatic `ImporterMesh.generate_lods`.
+- Revisited `/home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd` because the body still read too cubic in renders. Increased vertical segmentation, narrowed the waist, added fuller ribcage/chest shaping, rounded the shoulder roll, and added a front neck scoop so the torso no longer creates a flat face-blocking board in front of the helmet.
+- Removed the solid top cap from the procedural torso shell; the neck/pressure-seal hardware now defines the opening instead of a filled procedural plate.
+- Adjusted `/home/dexter/steam/games/the-moon/spacesuit_procedural_backpack_shell.gd` to make the PLSS/backpack smaller and rounder so it reads less like a rectangular block.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected front/rear results. The front render now shows the face inside the helmet with a scooped upper torso, a less cubic torso profile, and a rounded chest-panel area still attached to the suit.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 cellular fabric material and upper torso correction pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Re-read the local spec sections on PBR material behavior, local triplanar mapping, FastNoiseLite cellular normal maps, and visibility/HLOD requirements.
+- Inspected `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd`, `/home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd`, `/home/dexter/steam/games/the-moon/spacesuit_procedural_limb_shell.gd`, `/home/dexter/steam/games/the-moon/spacesuit_rig_setup.gd`, and the fabric/hard-shell `.tres` material files.
+- Checked `/home/dexter/steam/games/the-moon/extension_api.json` for the exact Godot 4.6 FastNoiseLite enum names before editing. Confirmed `TYPE_CELLULAR`, `DISTANCE_HYBRID`, and `RETURN_DISTANCE2_SUB` are valid.
+- Updated `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` so generated fabric and hard-shell normal textures use configured cellular noise, local triplanar mapping, and explicit normal-map conversion through `NoiseTexture2D`.
+- First render after adding a cellular albedo texture made the fabric far too dark and mottled. Corrected that by clearing `albedo_texture` and keeping the cellular detail in the normal map only, preserving the white EVA-suit look.
+- Refined `/home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd` again: lowered `top_y`, narrowed `shoulder_width`, reduced the upper profile width/depth, and increased shoulder roll so the hard torso no longer sits as high and broad around the helmet.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. The final render for this pass keeps the suit white, shows subtler material surface response, and has a lower/narrower upper torso silhouette around the helmet.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural elbow and knee bellows ring pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the current limb and joint nodes in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. The suit already had elbow and knee rib nodes, but they used plain `CylinderMesh` primitives.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_bellows_ring.gd`.
+- The bellows script generates a rounded corrugated ring with `SurfaceTool`, sets UVs and normalized 4-weight arrays before vertices, indexes the mesh, then calls `generate_normals()` and `generate_tangents()` before committing to an `ArrayMesh`.
+- Attached the bellows generator to all existing `ElbowRib_L/R_*` and `KneeRib_L/R_*` nodes, preserving the current transforms and dark rubber material assignment so the detail remains placed at the existing joint locations.
+- First render showed the generated rings were too large because the original primitive cylinder radius behaved like a half-scale mesh under the same transforms. Reduced `base_radius`, `rib_height`, `lip_height`, and groove amplitude in `spacesuit_procedural_bellows_ring.gd`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. The corrected rings no longer protrude outward like fins and now read as subtle attached joint/bellows detail.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural mesh-array compliance audit and helmet weighting pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Audited the current generated asset scripts against the spec requirements for `SurfaceTool`, UV assignment before vertices, indexed geometry, generated normals/tangents, normalized 4-weight skin arrays, PBR cellular material setup, visibility ranges, and ReflectionProbe integration.
+- Identified a concrete gap: `/home/dexter/steam/games/the-moon/spacesuit_procedural_helmet_shell.gd` generated a normalized cube-sphere helmet with UVs, normals, tangents, and indexed triangles, but did not emit `Mesh.ARRAY_BONES` or `Mesh.ARRAY_WEIGHTS`.
+- Updated `spacesuit_procedural_helmet_shell.gd` to use `SurfaceTool.SKIN_4_WEIGHTS`, assign each generated helmet vertex to the Helmet bone index with normalized `[1.0, 0.0, 0.0, 0.0]` weights, and keep UVs/weights assigned before `add_vertex()`.
+- Added `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` as a reusable direct verifier for generated spacesuit mesh surfaces. The audit checks representative generated nodes for vertex, normal, tangent, UV, index, bones, and weights arrays, and verifies each weight block sums to `1.0`.
+- Verification: `timeout 12 xvfb-run -a /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --path /home/dexter/steam --script res://tools/audit_spacesuit_mesh_arrays.gd` printed `SPACESUIT_MESH_ARRAY_AUDIT=PASS` and exited `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. The helmet/head placement remains stable after adding mesh skin arrays, and no visible placement regression was introduced.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture. Kept the mesh-array audit script as reusable verification tooling.
+
+2026-06-05 procedural neck bellows conversion pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the neck section of `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. `Neck_BellowsRib_1`, `Neck_BellowsRib_2`, and `Neck_BellowsRib_3` were still primitive `CylinderMesh` nodes.
+- Reused `/home/dexter/steam/games/the-moon/spacesuit_procedural_bellows_ring.gd` for the neck bellows ribs, preserving the existing transforms and seam-stitching material while assigning the generated mesh to the Helmet bone index with normalized 4-weight arrays.
+- Tuned the neck bellows generator parameters per node (`base_radius = 0.47`, `rib_height = 0.045`, `lip_height = 0.014`) so the neck ribs stay subtle and do not protrude into the helmet/face area.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include `Neck_BellowsRib_1`, `Neck_BellowsRib_2`, and `Neck_BellowsRib_3`.
+- Verification: `timeout 12 xvfb-run -a /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --path /home/dexter/steam --script res://tools/audit_spacesuit_mesh_arrays.gd` printed `SPACESUIT_MESH_ARRAY_AUDIT=PASS` and exited `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. The neck/helmet area remains stable, the face is not occluded, and no new floating neck parts are visible.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural hard lock-ring hardware pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the hard ring/collar nodes in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`: waist ring, helmet ring, lower neck lock ring, wrist lock rings, ankle lock rings, and layered waist bearings were still primitive `CylinderMesh` nodes.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_lock_ring.gd`.
+- The lock-ring script generates beveled collar geometry with `SurfaceTool`, sets UVs and normalized 4-weight arrays before vertices, indexes the mesh, then calls `generate_normals()` and `generate_tangents()` before committing to an `ArrayMesh`.
+- Wired the procedural lock-ring generator to `WaistRing_Mesh`, `HelmetRing_Mesh`, `Neck_LowerLockRing`, all wrist lock rings, all ankle lock rings, and the three layered waist bearings. Preserved the existing transforms and material assignments, with bone indices matching torso, helmet, forearm, or calf ownership as appropriate.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to check representative generated hard-ring nodes: waist, helmet, lower neck, wrist, ankle, and layered waist bearing.
+- First render showed that open sidewall-only lock rings exposed the waist-bearing layers as loose horizontal lines. Corrected `/home/dexter/steam/games/the-moon/spacesuit_procedural_lock_ring.gd` to generate capped, watertight collars with top and bottom cap triangles.
+- Verification: `timeout 12 xvfb-run -a /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --path /home/dexter/steam --script res://tools/audit_spacesuit_mesh_arrays.gd` printed `SPACESUIT_MESH_ARRAY_AUDIT=PASS` and exited `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. The key hard rings remain attached, wrist/ankle/helmet placements stayed stable, and the waist bearing no longer reads as floating loose lines.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural finger shell pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the hand nodes in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. Palm pads and fingertip armor already used procedural pad shells, but the main finger shafts (`Finger_L/R_1`, `Finger_L/R_2`, `Finger_L/R_3`) still used primitive `CapsuleMesh` resources.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_finger_shell.gd`.
+- The finger shell script generates compact rounded finger geometry with subtle knuckle bulges using `SurfaceTool`, assigns UVs and normalized 4-weight arrays before vertices, builds indexed side and cap triangles, and calls `generate_normals()` and `generate_tangents()` before committing to an `ArrayMesh`.
+- Wired the generator to all six main finger nodes, preserving the existing transforms and material assignments. Left fingers use the left forearm bone index; right fingers use the right forearm bone index.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include representative left and right finger nodes.
+- Verification: `timeout 12 xvfb-run -a /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --path /home/dexter/steam --script res://tools/audit_spacesuit_mesh_arrays.gd` printed `SPACESUIT_MESH_ARRAY_AUDIT=PASS` and exited `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. Finger shafts remain attached to the gloves and align with the existing fingertip armor without creating new floating hand parts.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural fabric restraint-band pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the arm and leg restraint bands in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. The band nodes were still primitive `CylinderMesh` resources even though they are visible fabric/strap details across the arms and legs.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_restraint_band.gd`.
+- The restraint-band script generates a compact fabric band with subtle edge ridges and weave variation using `SurfaceTool`, assigns UVs and normalized 4-weight arrays before vertices, builds indexed side and cap triangles, and calls `generate_normals()` and `generate_tangents()` before committing to an `ArrayMesh`.
+- Wired the generator to all left/right arm and leg restraint-band nodes. Bone indices were assigned to the corresponding upper-arm, forearm, thigh, or calf owner based on each node's position.
+- Expanded `/home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd` to include representative left/right arm and leg restraint bands.
+- First render showed the generated band edge ridges were too bright and sharp, especially on the legs. Reduced `edge_ridge` and `weave_amplitude` in `spacesuit_procedural_restraint_band.gd` so the bands read as fabric straps instead of hard shiny rings.
+- Verification: `timeout 12 xvfb-run -a /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --path /home/dexter/steam --script res://tools/audit_spacesuit_mesh_arrays.gd` printed `SPACESUIT_MESH_ARRAY_AUDIT=PASS` and exited `EXIT_CODE=0`.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary front-facing offscreen capture helper and visually inspected it. The bands remain attached to the arms and legs and are less visually harsh after the profile correction.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 rigged procedural torso and refined upper body profile from model-creationmd
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the local Godot API dump at `/home/dexter/steam/games/the-moon/extension_api.json` to verify exact Godot 4.6 method support before editing: `Skeleton3D.set_bone_rest()`, `Skeleton3D.reset_bone_poses()`, `MeshInstance3D.set_skeleton_path()`, `MeshInstance3D.set_skin()`, `Skin.set_bind_count()`, `Skin.set_bind_name()`, `Skin.set_bind_bone()`, `SurfaceTool.set_skin_weight_count()`, `SurfaceTool.set_bones()`, and `SurfaceTool.set_weights()`.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_rig_setup.gd` and attached it to the scene `Skeleton3D`. The script creates an idempotent spacesuit skeleton with Root, Torso, Helmet, Backpack, upper/lower arm, and upper/lower leg bones, assigns parent relationships, sets rest transforms, and resets bone poses.
+- Updated `/home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd` so `HardTorso_Mesh` points at `../Skeleton3D`, builds a `Skin` resource with Root and Torso binds, and emits normalized 4-weight skin data for every generated torso vertex via `SurfaceTool.set_bones()` and `SurfaceTool.set_weights()` before each vertex is added.
+- Initial model-viewer verification caught the Godot API sequencing rule that `SurfaceTool.set_skin_weight_count()` must be called before `SurfaceTool.begin()`. Reordered those calls and reran the check successfully.
+- Rendered `/home/dexter/steam/model.png` with a temporary offscreen capture helper to inspect the visible result of the rigging pass.
+- The first render was from the rear and made the PLSS/backpack look like a large rectangular body block, so I corrected the temporary capture camera to face the front and adjusted only the temporary capture lighting for a usable visual review.
+- Visual inspection of the corrected front render showed the hard torso and soft body-suit underlayer were still too tall, crowding the helmet/head area.
+- Refined the generated hard-torso profile in `spacesuit_procedural_torso_shell.gd`: reduced shoulder/waist width and chest/waist depth, lowered `top_y`, and shortened `bottom_y` so the generated chest shell reads less cubic and no longer climbs into the helmet as much.
+- Moved the top pressure seal and chest control details in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` downward and slightly inward so they remain attached to the revised torso surface instead of floating above it.
+- Resized `BodySuit_Mesh` from a tall capsule underlayer to a shorter, narrower torso support so the primitive underlayer stops rising into the head/helmet area.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 5 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with the temporary offscreen capture helper and visually inspected it; the render now shows the face visible in the helmet, a shorter generated hard torso, attached chest controls, and no new load errors.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 dynamic attachment and reflection-probe quality pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Audited the current scene/scripts against the remaining spec gaps. The model already had procedural torso and helmet generation, PBR tuning, visibility ranges, and torso skin weights, but dynamic rigid attachments and reflection-probe support were still missing.
+- Checked `/home/dexter/steam/games/the-moon/extension_api.json` for exact Godot 4.6 APIs before editing: verified `BoneAttachment3D.set_bone_name()`, `Node.reparent(new_parent, keep_global_transform = true)`, and `ReflectionProbe` properties such as `size`, `origin_offset`, `intensity`, `blend_distance`, `max_distance`, and `update_mode`.
+- Updated `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` to create a runtime `SuitReflectionProbe` around the suit with conservative one-shot updates, local probe bounds, and moderate intensity for visor/metal reflection support.
+- Extended `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` with `_setup_dynamic_mounts()`, which defers one frame, creates a `BackpackAttachment` `BoneAttachment3D` under `Skeleton3D`, targets the `Backpack` bone, and reparents the existing backpack mesh, side canisters, emergency handle, contact pad, harness straps, and upper mount bracket into that attachment while preserving their global transforms.
+- Ran the model-viewer verification after the async reparenting change: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Created a temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper, rendered `/home/dexter/steam/model.png`, and visually inspected it. The dynamic backpack reparenting did not move visible backpack components or create new floating parts.
+- Visual inspection also showed the soft body-suit capsule underlayer was still too tall and created an unrealistic high white collar/chest fill that blocked the lower helmet area.
+- Reduced `BodySuit_Mesh` in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` to a much shorter/narrower underlayer transform so it supports the waist/chest without rising into the helmet/head region.
+- Re-ran model-viewer verification after the underlayer correction; it again produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` and visually inspected it. The face remains visible inside the helmet, the front panel reads more clearly, the underlayer no longer fills the whole chest cavity, and the newly added dynamic backpack mount did not introduce a visible placement regression.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural limb shell pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Focused this pass on the spec requirement that limbs should move away from simple primitive capsules toward generated, indexed, tangent-ready cylindrical forms.
+- Inspected the current arm and leg nodes in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`: `UpperArm_L/R_Mesh`, `Forearm_L/R_Mesh`, `Thigh_L/R_Mesh`, and `Calf_L/R_Mesh` were still primitive capsule meshes with scene transforms and material overrides.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_limb_shell.gd`.
+- The limb script builds a tapered pressure-cylinder mesh at runtime with `SurfaceTool`, assigns UVs before vertices, emits normalized 4-weight bone arrays, indexes triangles, calls `generate_normals()` and `generate_tangents()`, and commits to an `ArrayMesh`.
+- Attached the limb generator script to upper arms, forearms, thighs, and calves in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`, preserving the existing node transforms and fabric material overrides.
+- First model-viewer load check produced many `Skin bind ... has no bone by that name` errors because placeholder bind names like `Bone_4` were treated as real skeleton bone names. Replaced placeholder bind names with the actual rig names: Root, Torso, Helmet, Backpack, UpperArm_L/R, Forearm_L/R, Thigh_L/R, and Calf_L/R.
+- After bind-name correction, the model-viewer load check produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- First render showed the limb meshes were badly pulled into large detached shell strips when live skeleton deformation was applied to separate already-transformed limb MeshInstance3D nodes. I changed the limb pass to keep generated bone/weight arrays in the mesh data but not apply live `set_skeleton_path()`/`set_skin()` on those separate limb nodes, avoiding the current scene-architecture deformation artifact.
+- The next render showed the limb triangle winding was wrong for Godot backface culling, causing the limbs to read as open sheets. Flipped the generated side and cap triangle winding in `spacesuit_procedural_limb_shell.gd`.
+- The next render showed the generated local radii were too large compared with Godot's prior capsule primitives and swallowed many ring/band details. Reduced exported radii on the upper arms, forearms, thighs, and calves in the scene.
+- The next render showed visible triangular crease artifacts. Reduced `crease_strength` in `spacesuit_procedural_limb_shell.gd` from `0.035` to `0.010`.
+- Final verification for this pass: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected it. The generated limbs now render at a controlled scale with cleaner closed surfaces, the model remains connected, and the face/chest/waist features remain visible.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural boot shell pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Used the Godot art-asset workflow for this pass: inspected the visible model, identified a low-quality primitive shape, replaced it with procedural geometry, then verified through both load checks and rendered output.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and confirmed both `Boot_L_Mesh` and `Boot_R_Mesh` were still simple `BoxMesh` nodes using the dark rubber material.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_boot_shell.gd`.
+- The boot script builds a rounded boot-like shell at runtime using `SurfaceTool`, with front-to-back profile variation, a flatter sole, wider toe region, narrower heel region, UVs assigned before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Attached the boot generator to `Boot_L_Mesh` and `Boot_R_Mesh` in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`, preserving the existing transforms and dark rubber material override.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected it. The old box boots are gone; both feet now read as rounded dark boots attached under the legs. The capture framing crops the lowest part of the boots, but the rendered geometry is present and connected.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural glove pad shell pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the hand section of `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. The glove palms were rounded sphere-like meshes, but `PalmPad_L_Mesh`, `PalmPad_R_Mesh`, and all fingertip armor pieces were still simple `BoxMesh` slabs.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_pad_shell.gd`.
+- The pad script generates a rounded superellipsoid-style protective pad at runtime using `SurfaceTool`, with UVs assigned before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Attached the pad generator to `PalmPad_L_Mesh`, `PalmPad_R_Mesh`, and all left/right `Glove_FingertipArmor_*` nodes, preserving their existing transforms and material overrides.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected it. The palm pads are now rounded instead of blocky, the fingertip pads remain visible, and no new floating hand parts appeared.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural ribbed life-support hose pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` for existing hose, pipe, connector, backpack, neck, and helmet nodes. There were no hose/pipe connector meshes in the current scene.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_hose.gd`.
+- The hose script builds a curved tube along a cubic Bezier path using `SurfaceTool`, with UVs assigned before vertices, normalized 4-weight arrays, indexed triangles, generated normals, and generated tangents.
+- Added left and right `LifeSupportHose_*` `MeshInstance3D` nodes near the neck/shoulder region in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`, using the dark rubber material and mirrored hose generation for the right side.
+- First render showed the hoses were visible and curved, but the lower ends still read as loose couplers. Adjusted the Bezier endpoints so the hoses terminate into the shoulder/upper-neck surfaces instead of floating forward.
+- Added closed end caps and larger terminal cuff radii in `spacesuit_procedural_hose.gd` so the ends look mechanically attached rather than open tube cuts.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected it. The hoses now read as curved ribbed connectors with closed cuffs and visually attached endpoints, not straight disconnected rods.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural rounded PLSS backpack shell pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn` and confirmed `Backpack_Mesh` was still a large `BoxMesh`, while canisters, harnesses, contact pads, and the upper mount bracket were separate detail meshes already handled by the runtime `BackpackAttachment` bone mount.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_backpack_shell.gd`.
+- The backpack script generates a rounded rectangular PLSS shell from six normalized cube-style faces, using `SurfaceTool`, UVs before vertices, normalized 4-weight arrays for the Backpack bone, indexed triangles, generated normals, and generated tangents.
+- Attached the backpack generator to `Backpack_Mesh` in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`, preserving the existing transform and backpack panel material override.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Rendered a rear view of `/home/dexter/steam/model.png` with a temporary offscreen capture helper because the PLSS/backpack is mostly hidden in the normal front capture.
+- First rear render showed the rounded shell worked but was too large, reading as a full suit back shell rather than a mounted PLSS backpack. Reduced the generated backpack shell dimensions in `spacesuit_procedural_backpack_shell.gd`.
+- Re-ran model-viewer verification; it again produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated the rear `/home/dexter/steam/model.png` and visually inspected it. The backpack now reads as a mounted rounded PLSS with existing rails/cuffs still aligned, and the ribbed life-support hoses remain visible behind the neck.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural rounded chest control panel pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected the chest control panel section of `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. The panel had attached display/buttons, but the main panel body was still a simple `BoxMesh` and lacked small dense controls.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_panel_shell.gd`.
+- The panel script generates a shallow rounded rectangular instrument-module shell using `SurfaceTool`, UVs before vertices, normalized 4-weight arrays for the Torso bone, indexed triangles, generated normals, and generated tangents.
+- Attached the panel generator to `ChestControlPanel_Main`, preserving the existing panel transform and backpack-panel material override.
+- Added extra small surface-mounted controls to the same chest-panel region: two status lights, two dark service ports, and a yellow caution strip. Positions were set on the existing panel face so they read as attached, not floating.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated the front `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected it. The chest panel now reads as a rounded instrument module with multiple small attached controls, and no new floating panel parts are visible.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 front torso stitch detail pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in `/home/dexter/godot/model-creationmd`.
+- Inspected existing seam, restraint-band, rib, and stitching nodes in `/home/dexter/steam/games/the-moon/Spacesuit3D.tscn`. The suit already had broad seam strips and restraint bands, but little fine stitch detail on the torso front.
+- Reused the existing `/home/dexter/steam/games/the-moon/spacesuit_procedural_pad_shell.gd` generator for small rounded stitch/rivet pads so the added detail uses the same procedural UV/normal/tangent/weight pipeline as the glove pad pass.
+- Added five small stitch pads along `Torso_LeftSoftSeam` and five matching pads along `Torso_RightSoftSeam`, using the edge-scuff material and small transforms placed directly on the existing seam strips.
+- Kept the stitches subtle in size and color so they read as sewn/fastener detail rather than new floating hardware.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 6 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Regenerated the front `/home/dexter/steam/model.png` with a temporary offscreen capture helper and visually inspected it. The stitch rows are visible as attached seam details, and no new floating torso parts are visible.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural normalized cube-sphere helmet and visibility pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality architecture described in `/home/dexter/godot/model-creationmd`.
+- Focused this pass on the specification requirement that the helmet avoid ordinary UV-sphere pole pinching by using a normalized cube-sphere style mesh.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_helmet_shell.gd`, attached to `HelmetGlass_Mesh`.
+- The helmet script generates six subdivided cube faces, maps each vertex through an equal-area cube-to-sphere normalization formula, assigns UVs before vertices, indexes triangles, calls `generate_normals()` and `generate_tangents()`, and commits the result to an `ArrayMesh`.
+- Initial render showed the generated cube-sphere was too large because the generated mesh used unit radius while the prior Godot primitive sphere behaved like a unit diameter mesh under the existing transform. Added an exported `radius = 0.5` and scaled generated points by that value to preserve the existing helmet glass size.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the helmet remains transparent, round, and close to the old size, with the face still visible inside.
+- Extended `/home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd` with `_apply_visibility_ranges()`, which applies guarded visibility range properties to all `MeshInstance3D` children: begin `0`, end `80`, end margin `8`. This starts addressing the culling/LOD section of the spec without relying on unsupported automatic LOD generation.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 5 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-05 procedural torso shell SurfaceTool pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality architecture described in `/home/dexter/godot/model-creationmd`.
+- Focused this pass on converting the hard torso from a primitive mesh into a generated procedural mesh with the topology pipeline called out by the spec.
+- Added `/home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd`, attached to `HardTorso_Mesh`.
+- The script builds the hard torso at runtime with `SurfaceTool`, emits UVs before each vertex, uses indexed triangles via `st.index()`, then calls `generate_normals()` and `generate_tangents()` before committing to an `ArrayMesh`.
+- Kept the existing hard-shell material override and node transform so the current chest panel, shoulder joints, waist ring, and backpack alignment remain compatible.
+- First load check failed because this project treats GDScript type inference warnings as hard errors. Made all exported and local variables in the procedural torso script explicitly typed.
+- First render of the generated torso was too broad and swallowed the arm sockets. Reduced the procedural profile defaults to `shoulder_width = 0.74`, `waist_width = 0.60`, `chest_depth = 0.68`, and `waist_depth = 0.52`.
+- Regenerated `/home/dexter/steam/model.png` with a temporary offscreen `SubViewport` capture helper and visually inspected it; the hard torso now uses a generated rounded shell and no longer overwhelms the shoulder joints.
+- Verification: `MODEL_VIEWER_DEFAULT_PATH=games/the-moon/Spacesuit3D.tscn timeout 5 /home/dexter/steam/games/godot/Godot_v4.6.3-stable_linux.x86_64 --headless --path /home/dexter/steam --script res://model-viewer-app/model_viewer.gd` produced no GDScript/resource errors and exited by expected timeout `EXIT_CODE=124`.
+- Removed the temporary `/home/dexter/steam/tools/capture_spacesuit_model_png.gd` helper after capture.
+
+2026-06-06 anatomical torso refinement pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Inspected the latest /home/dexter/steam/model.png and identified the hard torso as the main failing area: broad flattened shield silhouette, sharp lower side points, and compressed cubic proportions.
+- Revised /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd to use a smoother anatomical pressure-suit profile with narrower clavicle, fuller ribcage, tapered waist, rounded lower abdomen return, reduced front neck scoop, and less aggressive side/shoulder offsets.
+- Adjusted HardTorso_Mesh in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn to be slightly taller and narrower so the procedural shell no longer renders as a squat block.
+
+- Initial offscreen capture helper failed under Godot 4.6 because look_at() was called before the camera was inside the tree and SubViewport.camera_3d is not assignable. Correcting the temporary helper before re-rendering.
+
+- Updated the temporary capture helper again to use Camera3D.look_at_from_position(), matching Godot 4.6 behavior when driving rendering from a SceneTree script.
+
+- Second torso silhouette adjustment: lowered the generated hard torso top, narrowed the torso shell slightly, and reduced/lowered Torso_UpperPressureSeal so the neck/collar no longer reads as a broad flat shelf under the helmet.
+
+- Adjusted the temporary capture helper to render from the model-viewer front side (+Z toward the suit) after the first captures showed the rear/dark side and hid the face texture.
+
+- Returned the temporary capture camera to the front side (-Z toward the suit) and added ambient WorldEnvironment lighting so the front render is inspectable instead of nearly black.
+
+- Final collar clearance adjustment: lowered the hard torso top and narrowed/lowered Torso_UpperPressureSeal so the mouth/chin area is not buried behind the torso shell.
+
+- Additional collar cleanup: lowered torso top_y to -0.03 and reduced/lowered Torso_UpperPressureSeal again to remove the remaining high pointed collar corners near the helmet.
+
+- Verification after final collar cleanup: mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS and EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Regenerated /home/dexter/steam/model.png from the front view; visual inspection shows the face visible inside the helmet, improved neck clearance, and a smoother non-cubic torso silhouette compared with the earlier broad shield shape.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after rendering.
+
+2026-06-06 shoulder and arm proportion refinement pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Inspected the current /home/dexter/steam/model.png and identified the next major realism gap: the arms and shoulder assemblies sat too far from the torso, making the suit look mechanically detached rather than wearable.
+- Revised /home/dexter/steam/games/the-moon/Spacesuit3D.tscn to move both shoulder bearings, soft shoulder blends, underarm gussets, upper arms, forearms, gloves, wrist rings, fingers, arm restraint bands, palm pads, and fingertip armor inward as a coordinated proportional change.
+- Slightly compacted arm and hand scales while preserving the existing procedural mesh scripts and bone assignments.
+- Revised /home/dexter/steam/games/the-moon/spacesuit_procedural_hose.gd so the ribbed life-support hoses terminate closer to the revised neck/shoulder sockets instead of the old wide arm positions.
+
+- Verification after shoulder/arm proportion pass: mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS and EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Regenerated /home/dexter/steam/model.png and visually inspected it. The arms are closer to the torso, hand/wrist/finger detail follows the new positions, and the life-support hose endpoints remain visually connected to the neck/shoulder area.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after rendering.
+
+2026-06-06 procedural astronaut head mesh pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Inspected current generator coverage and found AstronautHead_Mesh was still the major visible MeshInstance3D using a primitive SphereMesh pipeline rather than generated arrays.
+- Updated /home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd so it builds an indexed procedural ellipsoid head with SurfaceTool, UVs assigned before vertices, generated normals, generated tangents, and normalized 4-weight bone arrays bound to the Helmet bone.
+- Preserved the existing human face texture path and material application after mesh generation.
+- Added AstronautHead_Mesh to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so the audit now enforces vertex/normal/tangent/UV/index/bone/weight arrays for the head too.
+
+- First render after procedural head conversion showed a regression: the head mesh was double-transformed upward by the Skeleton/Skin bind setup, and the UV seam landed on the face. Correcting the head script to keep procedural bone arrays without skinning the static head node and to center the face texture on the front hemisphere.
+
+- Corrected the procedural head pass after visual inspection: removed the Skeleton/Skin bind setup that double-transformed the head above the helmet, shifted the UV/angle phase so the face texture centers on the front, and removed unused skin helper code.
+- Final verification after head correction: strengthened mesh-array audit passed with AstronautHead_Mesh included, SPACESUIT_MESH_ARRAY_AUDIT=PASS and EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Regenerated /home/dexter/steam/model.png and visually inspected it. The head is inside the helmet, the face texture is centered on the procedural head mesh, and no duplicate/floating head remains.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after rendering.
+
+2026-06-06 runtime material and quality audit pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Inspected the current quality enhancer and found the geometry audit was strong, but material/PBR, visibility-range, ReflectionProbe, and dynamic BoneAttachment behavior were not separately verified.
+- Extended /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd to apply runtime PBR/triplanar/NoiseTexture2D normal-map treatment to backpack panel, dark rubber, seam stitching, and clear helmet bubble materials, in addition to the already tuned fabric, shell, metal, and visor materials.
+- Added /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd to instantiate the suit and verify material roughness/metallic ranges, local triplanar settings, FastNoiseLite-backed NoiseTexture2D normal maps, GeometryInstance3D visibility ranges/fade margins, SuitReflectionProbe, and BackpackAttachment BoneAttachment3D setup.
+
+- First runtime quality audit failed on spacesuit_gold_visor.tres: roughness remained 0.18 and metallic 0.8, outside the audit range for a smooth reflective visor. Fixing the material resource directly so the PBR values are correct persistently, not only through runtime mutation.
+
+- After fixing spacesuit_gold_visor.tres, the mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS and EXIT_CODE=0.
+- The new runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0, verifying runtime material PBR ranges, triplanar/noise-normal setup, visibility ranges, SuitReflectionProbe, and BackpackAttachment.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Regenerated /home/dexter/steam/model.png and visually inspected it. The face remains centered inside the helmet, the model renders cleanly, and no new front-view floating parts appeared.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after rendering.
+
+2026-06-06 procedural limb profile refinement pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Inspected the latest scene and identified a remaining visual/spec gap: limbs still read as simple straight cylinder-like tubes despite using generated arrays.
+- Updated /home/dexter/steam/games/the-moon/spacesuit_procedural_limb_shell.gd to add procedural pressure-suit shaping: joint taper near ends, oval/non-circular cross sections, circumferential fabric lobes, and retained subtle fabric creases.
+- Kept the existing SurfaceTool pipeline intact: UV before vertices, indexed triangles, generated normals/tangents, and normalized 4-weight bone arrays.
+
+- First render of the limb profile pass showed the procedural lobe/taper defaults were too aggressive, making limbs overly bulbous and exposing restraint-band artifacts. Reduced lobe_strength, joint_taper, and oval scale factors to keep a more realistic pressure-suit shape without returning to perfect cylinders.
+
+- Verification after toned-down limb profile pass: mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS and EXIT_CODE=0.
+- Runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Regenerated /home/dexter/steam/model.png and visually inspected it. The limbs now have a subtler non-cylindrical pressure-suit profile with attached restraint-band details and no new front-view floating parts.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after rendering.
+
+2026-06-06 mesh consistency and density audit pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Inspected the current audits and found the mesh-array audit proved array presence, but not coherence or production-level geometry density.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd to check per-mesh vertex/normal/UV/tangent/bone/weight count consistency, triangle-aligned index buffers, index range validity, and total generated vertex/triangle minimums.
+
+- Strengthened mesh audit verification passed: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=63568, SPACESUIT_TOTAL_TRIANGLES=119084, EXIT_CODE=0.
+- Runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- No temporary capture helper was present at cleanup time; existing /home/dexter/steam/model.png remains from the latest visual limb-profile verification.
+
+2026-06-06 skeleton and bone-weight verification pass
+
+- Continued the active goal to refine the spacesuit toward the high-quality procedural architecture described in /home/dexter/godot/model-creationmd.
+- Added explicit Skeleton3D layout and generated-mesh primary bone-index verification to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so generated surfaces are checked against the intended Root/Torso/Helmet/Backpack/limb rig rather than only array presence and density.
+- Starting verification for the strengthened rig audit, runtime quality audit, and model-viewer load.
+
+2026-06-06 visible art-quality refinement pass
+
+- Inspected /home/dexter/steam/model.png against /home/dexter/godot/model-creationmd and found remaining visible quality issues: the chest control stack was projected too far forward from the torso, shoulder bearing hardware read as large flat side slabs, and fingertip armor/finger placement still looked too detached for a wearable glove.
+- Preparing a scoped Spacesuit3D.tscn transform refinement while preserving the procedural SurfaceTool/ArrayMesh generation scripts and skeleton weight architecture.
+
+- Applied visual refinement edits to /home/dexter/steam/games/the-moon/Spacesuit3D.tscn: attached the chest control panel stack closer to the torso surface, reduced oversized shoulder bearing side hardware, adjusted fingertip armor closer to the glove fingers, and narrowed/lowered the lower torso and waist bearing rings so they read more like connected pressure seals.
+- Mesh-array audit passed after the visual edits: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=63568, SPACESUIT_TOTAL_TRIANGLES=119084, EXIT_CODE=0.
+- Runtime quality audit passed after the visual edits: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Recreated /home/dexter/steam/model.png with a temporary offscreen SubViewport capture helper, visually inspected it, and removed /home/dexter/steam/tools/capture_spacesuit_model_png.gd after capture.
+
+2026-06-06 multi-view quality audit pass
+
+- Continuing the active high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- The last verified render was front-only, so I am creating a temporary multi-view capture helper to inspect front, left, right, and back views for backpack contact, side silhouette, floating parts, and remaining non-professional proportions.
+
+- Multi-view inspection found remaining side/back quality failures: the PLSS/backpack stack protruded too far behind the wearer, the side canisters and handle/bracket pieces read as detached slabs from side view, the boot sole footprint was too blocky, and the layered waist rings still cut through the pelvis silhouette.
+- Preparing a compact PLSS/backpack, boot, and waist-ring transform pass in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn, preserving the procedural mesh scripts and auditable mesh arrays.
+
+- Applied compact PLSS/backpack refinements in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn: reduced backpack depth/height, brought the contact pad forward, shrank and moved side canisters/handle/mount brackets closer to the body, reduced the boot footprint, and toned down the layered waist-bearing rings.
+- Added temporary multi-view and bounds inspection helpers, then used them to verify side/back issues. Runtime bounds showed HardTorso_Mesh max_z=0.110 and Backpack_BackplateContactPad min_z=0.110 after correction, proving the backpack contact pad is no longer separated from the torso back.
+- Generated /home/dexter/steam/model_front.png, model_back.png, model_left.png, and model_right.png for multi-view visual inspection. The side/back views now show a more compact attached PLSS/backpack and smaller boot footprint than the previous pass.
+- Refreshed /home/dexter/steam/model.png from the updated front render; timestamp is 2026-06-06 01:17:44 +0800 and file size is 193258 bytes.
+- Verification after compact PLSS pass: mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=63568, SPACESUIT_TOTAL_TRIANGLES=119084, EXIT_CODE=0.
+- Runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed temporary /home/dexter/steam/tools/capture_spacesuit_multiview.gd and /home/dexter/steam/tools/inspect_spacesuit_bounds.gd after verification.
+
+2026-06-06 bounds/contact audit hardening pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- Inspected the current runtime audit and found it verified BackpackAttachment exists but did not verify that backpack/chest/control geometry physically contacts the suit body in rendered runtime bounds.
+- Preparing to extend /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with reusable AABB contact and protrusion checks so future passes catch floating PLSS and control-panel regressions.
+
+- Extended /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with reusable runtime AABB checks for chest panel contact, control detail seating, PLSS/backpack back contact, backpack protrusion limits, and boot footprint limits.
+- The strengthened runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0.
+- Added ChestControlPanel_UpperMountPad to /home/dexter/steam/games/the-moon/Spacesuit3D.tscn to cover the front-view black void above the chest control panel with an attached white procedural mounting plate.
+- Added ChestControlPanel_UpperMountPad to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so it is required to have generated vertex/normal/tangent/UV/index/bone/weight arrays.
+- Mesh-array audit passed after the mount pad addition: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=64248, SPACESUIT_TOTAL_TRIANGLES=120188, EXIT_CODE=0.
+- Regenerated /home/dexter/steam/model.png and visually inspected it. The black rectangular void above the control panel is gone and the chest equipment reads more integrated with the torso.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after capture.
+
+2026-06-06 procedural albedo texture pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- Inspected material resources and spacesuit_quality_enhancer.gd. The suit had PBR ranges, triplanar setup, and NoiseTexture2D normal maps, but the visible albedo layer was still mostly flat color.
+- Preparing a scoped procedural albedo-texture pass for fabric, shell, backpack panel, rubber, and stitching materials, with runtime audit coverage so texture richness is verified instead of assumed.
+
+- Implemented procedural albedo texture generation in /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd using Image.create_empty() and ImageTexture.create_from_image(). Fabric, hard shell, backpack panel, dark rubber, and seam stitching now receive subtle generated color variation in addition to triplanar NoiseTexture2D normal maps.
+- Extended /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so those material classes must have Texture2D albedo textures of at least 128px resolution, alongside the existing PBR, triplanar, normal-map, bounds/contact, visibility, reflection probe, and BoneAttachment checks.
+- First render showed the weave pattern was too strong and uniform, so I reduced the generated texture variation/strength values to keep the material breakup subtler and more realistic.
+- Verification after the procedural albedo pass: runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0.
+- Mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=64248, SPACESUIT_TOTAL_TRIANGLES=120188, EXIT_CODE=0.
+- Regenerated /home/dexter/steam/model.png; timestamp is 2026-06-06 01:26:47 +0800 and file size is 399929 bytes. Visual inspection shows visible but toned-down fabric/surface breakup rather than flat color.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after capture.
+
+2026-06-06 glove anatomy refinement pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- Current glove layout has four fingertip armor pads per hand but only three generated finger shafts, leaving one armor pad visually unsupported and making the hand anatomy less believable.
+- Preparing to add the missing generated fourth finger shaft for each glove and make those new fingers required by the mesh-array audit.
+
+- Added Finger_L_4 and Finger_R_4 to /home/dexter/steam/games/the-moon/Spacesuit3D.tscn so each glove has four generated finger shafts matching the four fingertip armor pads. The outer fingers use smaller radius/taper values so they read as outer glove fingers rather than duplicated middle fingers.
+- Added Finger_L_4 and Finger_R_4 to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so the new glove geometry is required to have generated vertex/normal/tangent/UV/index/bone/weight arrays.
+- Mesh-array audit passed after the glove anatomy pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=64772, SPACESUIT_TOTAL_TRIANGLES=121228, EXIT_CODE=0.
+- Runtime quality audit passed after the glove anatomy pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Regenerated /home/dexter/steam/model.png; timestamp is 2026-06-06 01:30:23 +0800 and file size is 400175 bytes. Visual inspection shows four generated fingers under each glove with no new front-view floating hand artifact.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after capture.
+
+2026-06-06 helmeted head texture refinement pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- Inspected /home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd and found it applied the full face source image directly across the entire procedural head UV map. Because the head UV wraps around the ellipsoid, this can put face-image seams or facial colors onto the back of the head in rear/side views.
+- Preparing to generate a head albedo texture procedurally: keep the face image in a front-facing oval region and fill the side/back/top UV regions with skin/hair colors so the helmeted head does not show a face texture seam from behind.
+- Resumed after session compaction and re-read /home/dexter/godot/model-creationmd plus the current /home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd patch. Next step is Godot audit execution to verify the procedural head albedo texture works at runtime.
+- Mesh-array audit passed after the resumed head texture patch: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=64772, SPACESUIT_TOTAL_TRIANGLES=121228, EXIT_CODE=0.
+- Runtime quality audit passed after the resumed head texture patch: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Generated refreshed multi-view renders with a temporary helper: /home/dexter/steam/model_front.png, model_back.png, model_left.png, model_right.png, and copied model_front.png to /home/dexter/steam/model.png.
+- Visual inspection showed the face no longer repeats as front facial features on the back of the head, but the rear head texture seam is still visible. The front silhouette still has a blocky/cubic torso and waist transition, so the next edit pass targets torso shape and head rear texture continuity.
+- Edited /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd to increase torso resolution to 40 height segments, narrow the neck and waist, add stronger ribcage/abdomen curvature, and soften the underarm/clavicle roll so the suit reads as a pressurized human torso rather than a cubic block.
+- Edited /home/dexter/steam/games/the-moon/Spacesuit3D.tscn to reduce the upper/lower torso seal rings and waist ring so those hard components no longer flatten the torso silhouette.
+- Edited /home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd to darken rear UV regions with hair/hood coloring and replace negative Color.lightened() usage with explicit clamped color multiplication.
+- First audit after the head/torso edits failed because /home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd had an indentation parse error at the generated texture loop. Corrected the nested loop indentation before rerunning audits.
+- Second audit attempt failed because Godot treated Variant type inference on the generated texture tone variable as a parse error. Made the head texture color math explicitly typed.
+- Mesh-array audit passed after the corrected head texture and torso reshape: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65412, SPACESUIT_TOTAL_TRIANGLES=122508, EXIT_CODE=0.
+- Runtime quality audit passed after the corrected head texture and torso reshape: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Rendered refreshed multi-view images and found the head back still had a strong vertical UV seam. Root cause: the procedural head mesh closed its final ring back to segment 0, forcing one rear triangle band to interpolate from UV 0.984 to UV 0.0 across the entire texture. Changed the head mesh seam to use segment + 1 for the closing ring so the position wraps but the UV reaches 1.0.
+- Audit after the head seam topology change failed on another indentation parse error in the head mesh build loop. Corrected the loop indentation before rerunning verification.
+- Mesh-array audit passed after fixing the head seam topology indentation: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65449, SPACESUIT_TOTAL_TRIANGLES=122508, EXIT_CODE=0.
+- Runtime quality audit passed after fixing the head seam topology indentation: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Regenerated final multi-view renders and copied the updated front render to /home/dexter/steam/model.png. Final render timestamps: model.png 2026-06-06 01:41:29 +0800 size 386092 bytes; model_back.png 2026-06-06 01:41:28 +0800 size 319663 bytes.
+- Visual inspection confirmed the rear head texture no longer has the previous hard UV wrap seam, and the torso is less cubic due to the narrowed seal rings plus more curved procedural torso profile.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_multiview.gd helper after final capture.
+- Model-viewer headless load produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 HLOD proxy implementation pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- Re-read the model-creation specification sections for normalized cube helmet geometry, procedural arrays/tangents/weights, triplanar materials, reflection probes, and HLOD visibility ranges. The current helmet generator already uses normalized cube-sphere math, but the optimization layer only applied visibility ranges to hero meshes and did not provide a separate lower-detail HLOD proxy group.
+- Preparing to add a runtime-generated SpacesuitHLOD_Proxy group in /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd plus runtime audit coverage in /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd.
+- Added runtime-generated SpacesuitHLOD_Proxy creation to /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd. The proxy builds simplified capsule/sphere/box MeshInstance3D components for torso, helmet, backpack, arms, legs, and boots, with visibility begin/end and margins configured for distance-only cross-fade use.
+- Extended /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so HLOD meshes are allowed to begin at distance, and so SpacesuitHLOD_Proxy must exist with at least 10 HLOD_ mesh nodes, valid meshes, far visibility thresholds, and cross-fade margins.
+- Verification after the HLOD proxy pass: mesh-array audit passed with SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65449, SPACESUIT_TOTAL_TRIANGLES=122508, EXIT_CODE=0.
+- Verification after the HLOD proxy pass: runtime quality audit passed with SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and EXIT_CODE=0, including the new HLOD proxy requirements.
+- Refreshed /home/dexter/steam/model.png after the HLOD pass; timestamp is 2026-06-06 01:46:09 +0800 and file size is 386092 bytes. Visual inspection confirmed the close-range hero render was not polluted by the distance-only proxy.
+- Model-viewer headless load after the HLOD pass produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed the temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd helper after capture.
+
+2026-06-06 watertight mesh audit pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- The specification explicitly calls for stitched, watertight procedural cylindrical/helmet/torso geometry. Existing audits verify arrays, tangents, UVs, indices, bones, weights, materials, contact, reflection probes, and HLOD, but they do not directly inspect open boundary edges. Preparing a temporary boundary-edge inspection script to find which generated meshes still have open borders.
+- Temporary boundary-edge inspection results: HardTorso_Mesh BOUNDARY_EDGES=64; HelmetGlass_Mesh BOUNDARY_EDGES=432; AstronautHead_Mesh BOUNDARY_EDGES=200; all checked arm, leg, and boot meshes had BOUNDARY_EDGES=0. The torso opening is the immediate watertightness defect because it is an uncapped shell edge under the neck assembly.
+- Added a top cap to /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd so HardTorso_Mesh no longer has open top boundary edges under the neck assembly.
+- Re-ran the temporary boundary-edge inspection: HardTorso_Mesh BOUNDARY_EDGES=0; arm, leg, and boot meshes remained BOUNDARY_EDGES=0. HelmetGlass_Mesh and AstronautHead_Mesh still report topological UV-island seam boundaries, but the torso/limb/boot cylindrical shells now satisfy the watertight check targeted by this pass.
+- Extended /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd with permanent watertight boundary-edge checks for HardTorso_Mesh, arms, legs, and boots. The first audit edits exposed indentation mistakes in the audit file, which were corrected by rewriting the per-mesh loop and making the edge-key type explicit.
+- Mesh-array audit passed after the watertight torso cap and strengthened audit: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the watertight torso cap: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Refreshed /home/dexter/steam/model.png; timestamp is 2026-06-06 01:55:54 +0800 and file size is 386125 bytes. Visual inspection showed no close-view regression from the hidden torso top cap.
+- Model-viewer headless load after the watertight pass produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed temporary /home/dexter/steam/tools/inspect_spacesuit_boundary_edges.gd and /home/dexter/steam/tools/capture_spacesuit_model_png.gd helpers after verification.
+
+2026-06-06 geometric watertightness audit pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- The previous boundary-edge audit counted index edges, which correctly caught the uncapped torso but over-reports intentional UV-island seams on the normalized cube-sphere helmet and textured head. Preparing a geometric boundary inspection that merges coincident vertex positions before counting open edges.
+- Temporary geometric boundary inspection passed: HelmetGlass_Mesh GEOMETRIC_BOUNDARY_EDGES=0; AstronautHead_Mesh GEOMETRIC_BOUNDARY_EDGES=0; HardTorso_Mesh GEOMETRIC_BOUNDARY_EDGES=0. This proves the remaining helmet/head index boundary reports are UV-island seams rather than physical holes.
+- Added permanent geometric watertightness checks for HelmetGlass_Mesh and AstronautHead_Mesh to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd. These checks quantize coincident vertex positions before counting open edges, so intentional UV-island split vertices do not produce false physical-hole failures.
+- The first audit edits exposed indentation drift in the per-mesh loop of /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd. Repaired the loop so valid meshes execute the array, skeleton, strict watertight, and geometric watertight checks in the normal path rather than under missing-mesh branches.
+- Mesh-array audit passed after the geometric watertightness audit was made permanent: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the geometric watertightness audit update: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Refreshed /home/dexter/steam/model.png; timestamp is 2026-06-06 02:05:50 +0800 and file size is 386125 bytes. Visual inspection showed no close-view regression.
+- Model-viewer headless load after the geometric watertightness pass produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed temporary /home/dexter/steam/tools/inspect_spacesuit_geometric_boundaries.gd and /home/dexter/steam/tools/capture_spacesuit_model_png.gd helpers after verification.
+
+2026-06-06 HLOD distance behavior verification pass
+
+- Continuing the high-quality spacesuit refinement goal from /home/dexter/godot/model-creationmd.
+- The HLOD proxy exists and is structurally audited, but the specification also requires practical distance behavior with smooth range boundaries. Preparing to add functional runtime audit coverage that evaluates near, transition, and far visibility ranges for hero meshes and HLOD proxy meshes.
+- Added functional HLOD distance behavior checks to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd. The audit now verifies no proxy meshes are active at 40m, enough hero meshes are active at 40m, both hero and proxy meshes overlap in the 90m cross-fade band, and only proxy meshes remain active at 150m.
+- Mesh-array audit passed after the HLOD distance behavior audit addition: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the HLOD distance behavior audit addition: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Captured a 150m diagnostic HLOD render at /home/dexter/steam/model_hlod_far.png with a narrow FOV so the distance proxy could be inspected while still exercising far-range visibility. The first far render proved the proxy was active but showed a crude square backpack block and low boots.
+- Refined /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd HLOD proxy generation: shrank and moved the backpack behind the torso, added neck/waist seal and shoulder proxy cues, used a dedicated dark-gray boot material, and moved the boot proxies upward to sit closer under the calves.
+- Mesh-array audit passed after the HLOD proxy silhouette refinement: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the HLOD proxy silhouette refinement: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Refreshed /home/dexter/steam/model_hlod_far.png after the proxy refinement; timestamp is 2026-06-06 02:12:30 +0800 and file size is 197265 bytes. Visual inspection showed the far-distance proxy now reads as a coherent simplified spacesuit, with no front-facing backpack square dominating the torso.
+- Refreshed /home/dexter/steam/model.png; timestamp is 2026-06-06 02:13:37 +0800 and file size is 386125 bytes. Visual inspection showed no close-view regression from the HLOD-only changes.
+- Model-viewer headless load after the HLOD distance behavior pass produced no resource/script errors and exited by expected timeout EXIT_CODE=124.
+- Removed temporary /home/dexter/steam/tools/capture_spacesuit_hlod_far.gd and /home/dexter/steam/tools/capture_spacesuit_model_png.gd helpers after verification.
+
+2026-06-06 high-quality body silhouette and material audit pass
+
+- Continuing the model-creationmd refinement goal after session resume. Re-read diary.md, the specification, the current runtime verifier, mesh-array verifier, torso shell generator, quality enhancer, and current /home/dexter/steam/model.png.
+- Current strongest remaining gap is visible realism: the front render still reads as stacked cubic torso/neck shells. The material audit also verifies NoiseTexture2D presence but not the cellular noise configuration required by the specification.
+- Preparing a scoped torso/neck silhouette refinement plus stricter procedural normal-map audit coverage.
+
+- Edited /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd to narrow the neck and waist profile, increase ribcage/abdomen curvature, and add stronger shoulder round-over so the hard torso reads less cubic.
+- Edited /home/dexter/steam/games/the-moon/Spacesuit3D.tscn to reduce the upper chest mount pad, slim the helmet/neck rings and bellows, and move/resize the shoulder bearings, shoulder soft blends, left upper arm, left forearm, and left glove closer to the body for a more realistic pressure-suit silhouette.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so procedural normal maps must be 512px NoiseTexture2D normal maps backed by FastNoiseLite TYPE_CELLULAR noise, controlled jitter/return settings, and realistic bump_strength ranges.
+- Mesh-array audit passed after the body silhouette and material-audit pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the stricter cellular-noise checks: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Regenerated /home/dexter/steam/model.png using a temporary xvfb Godot capture helper after correcting camera side/framing and front lighting. Final timestamp: 2026-06-06 02:22:08 +0800, size 282370 bytes. Visual inspection shows the control panel details remain visible, shoulders sit closer to the torso, and the torso/neck stack is less slab-like than the previous render.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+- Removed temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd after capture.
+
+2026-06-06 arm symmetry and high-quality silhouette continuation
+
+- Continuing the full model-creationmd refinement goal. Re-checked diary.md, the specification, current git status, and /home/dexter/steam/model.png.
+- Found a current-state defect from the previous silhouette pass: the left upper arm, forearm, and glove were moved closer to the torso, but the matching right-side arm chain was not updated. This leaves the suit visually asymmetric and weaker against the realistic pressure-suit silhouette requirement.
+- Preparing a scoped right-arm symmetry fix plus audit coverage for left/right arm-chain transform parity.
+
+- Moved both arm chains into a coherent mirrored structure in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn: right upper arm/forearm/glove now match the inward left-arm silhouette, and wrist rings, elbow ribs, restraint bands, palm pads, fingers, and fingertip armor were aligned to the new hand centers on both sides.
+- Fixed /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so the stricter NoiseTexture2D/FastNoiseLite cellular normal-map checks are actually reachable instead of sitting under an early return.
+- Added runtime arm-chain symmetry checks to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd for upper arms, forearms, gloves, palm pads, wrist rings, restraint bands, fingers, and fingertip armor.
+- Mesh-array audit passed after the arm symmetry pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the verifier fix and symmetry checks: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0. This now proves the material cellular-noise checks execute.
+- Regenerated /home/dexter/steam/model.png with a temporary xvfb Godot capture helper. Final timestamp: 2026-06-06 02:30:51 +0800, size 276456 bytes. Visual inspection shows the arm chains are mirrored and the fingers/wrists remain attached to the glove centers rather than floating on the old wide line.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+- Removed temporary /home/dexter/steam/tools/capture_spacesuit_model_png.gd after capture.
+
+2026-06-06 three-tier HLOD refinement pass
+
+- Continuing the full model-creationmd refinement goal. Re-read diary.md, the current HLOD generator, the runtime quality audit, and the model-creationmd HLOD section.
+- Found the next architectural gap: the specification calls for three separate procedural spacesuit fidelities with overlapping visibility ranges. The current scene has hero meshes and a single far proxy group, so it lacks a mid-distance fidelity layer.
+- Preparing to add a runtime-generated SpacesuitHLOD_MidProxy layer, keep the existing SpacesuitHLOD_Proxy as the far proxy, and strengthen the runtime audit to verify near, mid-transition, mid-only, far-transition, and far-only behavior.
+
+- Added /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd runtime generation for SpacesuitHLOD_MidProxy, a middle-fidelity proxy layer with torso, helmet, neck bellows, chest panel, backpack, shoulders, arms, gloves, legs, and boots.
+- Kept the existing SpacesuitHLOD_Proxy as the far-distance proxy and moved the default far proxy visibility begin to 128m with cross-fade margins, so the model now has hero, mid, and far topological fidelities instead of hero plus one proxy.
+- Updated /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd to verify both proxy groups separately, classify HLOD meshes into mid/far layers, and check near hero-only behavior at 40m, hero+mid transition at 90m, mid/far transition at 140m, and far-only behavior at 180m.
+- Mesh-array audit passed after the three-tier HLOD pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the HLOD layer audit update: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 SurfaceTool commit_to_arrays pipeline pass
+
+- Continuing the full model-creationmd refinement goal. Audited procedural generator scripts against the topology section of model-creationmd.
+- Found that the generators correctly use SurfaceTool, set UV/bones/weights before add_vertex, generate normals, and generate tangents, but they currently call st.commit(array_mesh). The specification explicitly calls for commit_to_arrays() followed by ArrayMesh.add_surface_from_arrays() to expose the low-level ArrayMesh buffer pipeline.
+- Preparing a mechanical generator update plus static audit coverage for the required SurfaceTool-to-ArrayMesh pipeline.
+
+- Mechanically updated 19 procedural generator scripts under /home/dexter/steam/games/the-moon from st.commit(array_mesh) to the explicit model-creationmd pipeline: st.commit_to_arrays(), ArrayMesh.new(), and array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays).
+- Added static pipeline coverage to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd. The mesh audit now reads each procedural generator source file, fails on direct SurfaceTool.commit(array_mesh), and requires both commit_to_arrays() and add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, ...).
+- Source verification found no remaining direct .commit(array_mesh) calls in the 19 procedural generator scripts; all 19 contain commit_to_arrays() and add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, ...).
+- Mesh-array audit passed after the generator pipeline update: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the generator pipeline update: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 dynamic hose BoneAttachment pass
+
+- Continuing the full model-creationmd refinement goal. Audited dynamic mount code and runtime audit coverage.
+- Found that the backpack PLSS is reparented to a BackpackAttachment after an awaited process_frame, but LifeSupportHose_L and LifeSupportHose_R are still root children rather than dynamic BoneAttachment-mounted exterior equipment.
+- Preparing to add a HelmetAttachment bound to the Helmet bone, defer one frame with the backpack attachment path, reparent the hoses to that attachment while preserving their global transforms, and extend runtime audit coverage.
+
+- Added HelmetAttachment creation in /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd, bound to the Helmet bone through BoneAttachment3D.
+- Updated the deferred dynamic mount setup to create both BackpackAttachment and HelmetAttachment, await one process frame, then reparent LifeSupportHose_L and LifeSupportHose_R to HelmetAttachment while preserving their global transforms. This brings the hoses into the same BoneAttachment/deferred-frame pattern already used for the PLSS backpack.
+- Replaced the runtime audit BackpackAttachment-only check with /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd dynamic attachment checks for BackpackAttachment and HelmetAttachment, including required mounted children under each attachment.
+- Runtime quality audit passed after the dynamic hose attachment pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the dynamic hose attachment pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 SurfaceTool source sequencing audit pass
+
+- Continuing the full model-creationmd refinement goal. Audited the 19 procedural generator scripts for SurfaceTool topology sequencing.
+- Found the scripts already contain set_smooth_group(1), set_uv, set_bones, set_weights, generate_normals(), generate_tangents(), commit_to_arrays(), and add_surface_from_arrays(), but the static mesh audit currently only enforces the commit_to_arrays/add_surface_from_arrays portion.
+- Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so it fails if a generator omits smooth groups, vertex attributes, or the required normal/tangent/commit ordering.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd with source-order checks for all 19 procedural generator scripts. The audit now requires SurfaceTool.begin(Mesh.PRIMITIVE_TRIANGLES), set_smooth_group before the first add_vertex, set_uv, set_bones, set_weights, generate_normals before generate_tangents, generate_tangents before commit_to_arrays, and ArrayMesh.add_surface_from_arrays after ArrayMesh.new.
+- Mesh-array audit passed after the source sequencing audit update: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0. This now enforces the model-creationmd SurfaceTool sequencing requirement rather than relying on manual inspection.
+- Runtime quality audit passed after the source sequencing audit update: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 helmet normalized cube-sphere and audit reachability pass
+
+- Continuing the full model-creationmd refinement goal. Audited the helmet generator against the normalized cube-sphere requirement and inspected the mesh-array source audit.
+- Confirmed /home/dexter/steam/games/the-moon/spacesuit_procedural_helmet_shell.gd uses _cube_point(), _normalized_cube_sphere_point(), six cube faces, and the equal-area cube-sphere projection formula rather than a UV sphere.
+- Found a verifier bug in /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd: the source-sequencing checks added in the previous pass were indented under the direct SurfaceTool.commit failure branch, so they did not run for compliant scripts. Preparing to fix that reachability bug and add explicit helmet cube-sphere source requirements.
+
+- Fixed the reachability bug in /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so generator source checks now run for every listed procedural generator, not only under unreachable missing-file/direct-commit branches.
+- Added explicit normalized cube-sphere source requirements for /home/dexter/steam/games/the-moon/spacesuit_procedural_helmet_shell.gd: _cube_point(), _normalized_cube_sphere_point(), six cube faces, the cube-sphere equal-area square-root projection terms, and no SphereMesh.new()/UV-sphere style marker.
+- Refined the source sequencing heuristic to check set_smooth_group before the first generated vertex/triangle call after SurfaceTool.begin, while still requiring st.add_vertex exists in the helper path. This avoids false positives from helper function definitions before the build function.
+- Mesh-array audit passed with the corrected reachable source checks and helmet cube-sphere guard: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Runtime quality audit passed after the corrected source audit: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 triplanar scale audit pass
+
+- Continuing the full model-creationmd refinement goal. Audited material quality setup and runtime material checks against the triplanar section of model-creationmd.
+- Found that /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd already assigns localized uv1_scale values for fabric, shell, backpack panel, rubber, and stitching, but /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd only checks uv1_triplanar=true and uv1_world_triplanar=false.
+- Preparing to add per-material uv1_scale bounds so the audit proves localized triplanar projection scale instead of only projection mode.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd material requirements with per-material uv1_scale bounds for suit fabric, hard shell, backpack panel, dark rubber, and seam stitching.
+- Added _check_uv1_scale() to verify uv1_scale exists, all XYZ components stay within the expected local triplanar projection range, and XYZ values remain uniform so procedural textures stay anchored and consistently scaled on moving suit geometry.
+- Runtime quality audit passed with triplanar scale checks active: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the triplanar scale audit pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65450, SPACESUIT_TOTAL_TRIANGLES=122572, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 high-quality torso and PBR audit pass
+
+- Continuing the model-creationmd refinement goal after resume. Re-read diary.md, confirmed the active specification file is /home/dexter/godot/model-creationmd, and inspected the torso generator, quality enhancer, and runtime audit.
+- Found the next visible quality gap: the torso generator is procedural and watertight, but its profile can still read cubic because the shell stays too uniformly broad through the chest/abdomen. Preparing to reshape it into a more anatomical pressurized suit shell and add runtime audit coverage so the refinement is measurable.
+
+- Refined /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd to reduce the cubic body read: narrowed the neck profile, increased ribcage-to-waist taper, flattened the back relative to the pressurized front, and replaced flat fan caps with rounded multi-ring cap transitions.
+- Fixed the first rounded-cap topology attempt after mesh audit reported 40 open boundary edges. Added a temporary debug_torso_edges.gd, identified duplicate unmerged top/bottom cap ring edges, changed cap outer vertices to reuse the exact segment-based side-wall vertex path, then removed the debug script.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with measurable torso anatomical profile checks, plus explicit high-quality PBR checks for visor saturated yellow-orange albedo, clearcoat, helmet-bubble alpha transparency, and clearcoat roughness.
+- Updated /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd and the material resources spacesuit_gold_visor.tres / spacesuit_clear_bubble.tres so runtime and direct resource loads agree on the visor/glass PBR settings.
+- Refreshed /home/dexter/steam/model.png. The first capture accidentally saved the Godot project manager because /home/dexter/steam has no project.godot; corrected it using a temporary root project.godot and capture script, then removed all temporary capture/project files. Final model.png is a spacesuit render, 1152x648, timestamp 2026-06-06 02:57 +0800.
+- Final verification passed: runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124.
+
+2026-06-06 continued full-spec spacesuit quality audit pass
+
+- Resumed the active model-creationmd objective. Treating the previous torso/PBR pass as partial progress, not completion. Re-reading the spec, audits, generated model image, and scene/scripts to identify the next high-impact requirement that is either missing or weakly verified.
+
+- Found next weakly verified spec area: material resources are checked, but runtime audit does not prove key generated MeshInstance3D surfaces are actually bound to the intended fabric, hard-shell, rubber, metal, glass, backpack, stitching, face, and panel materials. Preparing to add explicit surface material binding verification.
+
+- Added SURFACE_MATERIAL_BINDINGS to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so runtime quality now proves representative generated suit surfaces are effectively bound to the intended fabric, hard shell, rubber, metal, glass, backpack panel, stitching, button, label, and edge-scuff materials.
+- The stricter audit initially exposed two gaps: LifeSupportHose_L had no effective material after procedural mesh generation/reparenting, and AstronautHead_Mesh uses a generated face texture material with no resource_path rather than the static skin material path.
+- Fixed /home/dexter/steam/games/the-moon/spacesuit_procedural_hose.gd to restore spacesuit_dark_rubber.tres as the surface override after building the hose ArrayMesh when no override is present. Added LifeSupportHose_R to the binding audit too.
+- Adjusted the head check to validate the generated StandardMaterial3D face material directly: it must have a generated Texture2D albedo map at least 512px and skin/hood-appropriate roughness, instead of requiring a static resource_path.
+- Verification after the material-binding pass: runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124. No temporary capture/debug scripts remain.
+
+- Source sweep found no automatic ImporterMesh/generate_lods usage and no obvious Godot 3 legacy class names in the spacesuit scripts/audits. Preparing to encode this as a mesh-audit source guard so the forbidden-pattern check is repeatable.
+
+- Added a forbidden/legacy source pattern guard to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd. The mesh audit now scans procedural generator scripts plus spacesuit_quality_enhancer.gd and spacesuit_rig_setup.gd for generate_lods(), ImporterMesh, surface_get_lods(), PoolVector, Spatial/KinematicBody/MeshInstance/Skeleton Godot-3-style markers, VisualServer, GIProbe, and BakedLightmap.
+- Verification after adding the source guard: mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124.
+
+2026-06-06 skeletal binding verification pass
+
+- Resumed the active model-creationmd objective. The next high-risk requirement is skeletal binding: previous audits prove bone/weight arrays exist, but I am checking whether generated MeshInstance3D nodes are actually bound to Skeleton3D with Skin resources so the arrays can drive animation.
+
+- Inspection found a real skeletal-binding gap: many generators emit Mesh.ARRAY_BONES and Mesh.ARRAY_WEIGHTS, and some define skin helpers, but most MeshInstance3D nodes do not set skeleton_path or Skin at runtime. This is weaker than the model-creationmd requirement that procedural meshes be synchronized with Skeleton3D for animation compatibility. Preparing a runtime binding pass plus audit coverage.
+
+- Added /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd runtime skeletal binding setup. After Skeleton3D is available and one frame has elapsed, non-HLOD and non-BoneAttachment-mounted generated MeshInstance3D nodes are bound to Skeleton3D with skeleton_path and a shared Skin from create_skin_from_rest_transforms(). This keeps rigid BoneAttachment equipment separate while making hero suit geometry animation-ready.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with _check_skeletal_mesh_bindings(). The audit now requires non-HLOD generated meshes with bone/weight arrays to resolve their skeleton_path to Skeleton3D and carry a Skin resource with enough binds for the skeleton.
+- Verification after the skeletal binding pass: runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124.
+
+2026-06-06 skeletal deformation proof pass
+
+- Resumed the active model-creationmd objective. Previous pass bound generated meshes to Skeleton3D, but binding alone does not prove animation deformation works. Inspecting current runtime audit and skeleton/mesh APIs to add a deformation proof for representative articulated suit parts.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with a skeletal pose-response proof. The audit now offsets Helmet and Backpack bone poses, forces skeleton transforms to update, waits for BoneAttachment3D synchronization, and verifies HelmetAttachment and BackpackAttachment actually move with their bones before resetting poses.
+- Verification after pose-response audit: runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124. No temporary capture/debug scripts remain.
+
+2026-06-06 collision readiness pass
+
+- Resumed the active model-creationmd objective. The spec links watertight procedural meshes to accurate shadow mapping and physics collision generation; current audits prove watertightness but not collision surface generation. Inspecting scene/scripts for collision coverage and shadow/collision settings.
+
+- Found the only existing CollisionShape3D in Spacesuit3D.tscn has no configured shape, and there is no runtime collision generation for the watertight procedural meshes. Preparing convex collision proxies for the major watertight suit shells and audit coverage for them.
+
+- Added collision readiness generation to /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd. The quality enhancer now creates StaticBody3D/CollisionShape3D convex collision proxies under the major watertight procedural parts: torso, helmet glass, head, arms, legs, calves, and boots. It also forces shadow casting on generated MeshInstance3D nodes during visibility setup.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with _check_collision_and_shadow_readiness(). The audit now verifies each major collision-capable mesh has shadow casting enabled, a StaticBody3D CollisionProxyBody, non-empty collision layer, enabled CollisionShape3D, and a ConvexPolygonShape3D generated from the mesh.
+- Verification after collision readiness pass: runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124. No temporary capture/debug scripts remain.
+
+2026-06-06 index-buffer efficiency pass
+
+- Resumed the active model-creationmd objective. The spec requires optimized indexed vertex buffers, not merely the presence of Mesh.ARRAY_INDEX. Inspecting current mesh audit coverage for whether generated meshes actually reuse indexed vertices enough to avoid triangle-isolated geometry.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd with _check_index_buffer_reuse(). The mesh audit now proves each generated mesh index buffer references all vertices and has average vertex reference reuse above 1.10, so a trivial triangle-isolated index array cannot satisfy the model-creationmd indexed-buffer optimization requirement.
+- Verification after index-buffer efficiency pass: mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124. No temporary capture/debug scripts remain.
+
+2026-06-06 packed array contract pass
+
+- Resumed the active model-creationmd objective. The spec explicitly requires low-level Mesh.ARRAY_MAX surface arrays with typed PackedArray slots. Current mesh audit checks array presence/counts, but I am inspecting whether it verifies array size and exact PackedArray data types.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd with _check_surface_array_contract(). The audit now verifies every generated mesh surface array has size Mesh.ARRAY_MAX and that required slots use the exact PackedArray types required by model-creationmd: PackedVector3Array for vertices/normals, PackedFloat32Array for tangents/weights, PackedVector2Array for UVs, and PackedInt32Array for indices/bones.
+- Verification after packed-array contract pass: mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340; runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS; model-viewer load check produced no script/resource errors and exited only by expected timeout EXIT_CODE=124. No temporary capture/debug scripts remain.
+
+2026-06-06 reflection-probe quality pass
+
+- Resumed the full model-creationmd objective. Re-read the current diary tail and spec markers, and identified a remaining weakly verified requirement: the spec explicitly calls for a ReflectionProbe configured around the spacesuit so the gold visor and glass receive localized reflections, but the runtime audit only checked for a probe with minimal intensity and size.
+- Preparing to refine /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd and /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so the probe is anatomically placed around the helmet/body/backpack volume and has enforceable size, offset, max-distance, blend-distance, and update-mode settings.
+
+- Refined /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd SuitReflectionProbe from a generic near-cube volume into a fitted reflection volume: narrower X, taller Y, deeper Z for the backpack, biased origin toward visor/upper torso, higher intensity, larger max/blend distance, box projection enabled, and shadows enabled.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd _check_reflection_probe() to verify fitted non-cubic size, upper-torso placement, visor-biased origin offset, max/blend distance, box projection, shadows, update mode, and AABB coverage of HardTorso_Mesh, HelmetGlass_Mesh, and Backpack_Mesh.
+- Runtime quality audit passed after the reflection-probe pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the reflection-probe pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+- Source sweep confirmed all procedural generator scripts use SurfaceTool.SKIN_4_WEIGHTS. Preparing to encode that four-weight source contract in the mesh audit.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd source sequencing checks to require st.set_skin_weight_count(SurfaceTool.SKIN_4_WEIGHTS) and reject SurfaceTool.SKIN_8_WEIGHTS. This makes the model-creationmd optimized four-weight skeletal deformation requirement repeatable at source-audit time.
+- Verification after the four-weight source contract pass: mesh-array audit SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0; runtime quality audit SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Final cleanup check found no temporary capture_spacesuit_model_png.gd or debug_torso_edges.gd scripts under /home/dexter/steam.
+
+2026-06-06 procedural noise fidelity pass
+
+- Continued the full model-creationmd objective. Re-read the spec sections around Dynamic Normal Map Pipeline and procedural cellular fabric; identified that current runtime audit proves NoiseTexture2D + FastNoiseLite cellular normal maps, but does not prove the explicitly specified fractal_weighted_strength tuning or material-specific frequency ranges that create subtle fabric wear/weave rather than generic positive noise.
+- Preparing to update /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd to set fractal_weighted_strength per generated normal texture and strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with per-material normal frequency, bump strength, normal_scale, and weighted-strength checks.
+
+- Updated /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd _make_noise_texture() to accept a weighted_strength parameter and set FastNoiseLite.fractal_weighted_strength when the Godot runtime exposes it. Applied material-specific values: stronger weighted cellular variation for suit fabric and seam stitching, moderate variation for rubber/backpack panels, and lower variation for hard shell.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd material requirements with per-material frequency, bump_strength, normal_scale, and fractal_weighted_strength ranges. The runtime audit now proves the procedural normal maps are specifically tuned for fabric weave, stitching, rubber, backpack panels, and hard shell rather than only checking for any cellular noise texture.
+- Runtime quality audit passed after the procedural noise fidelity pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the procedural noise fidelity pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 HLOD AABB generosity pass
+
+- Continued the full model-creationmd objective. Re-read the HLOD/visibility range section and inspected current runtime audit coverage. Found that the audit proves distance transitions at fixed camera distances, but does not prove the model-creationmd warning that Godot visibility distance is based on mesh AABB centers and therefore ranges must be generous enough for asymmetrical attachments and extremities.
+- Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with an AABB-aware visibility-range check that compares each MeshInstance3D range end + margin against the mesh global AABB center offset and radius.
+
+- Added _check_visibility_aabb_generosity() to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd. The runtime audit now verifies every MeshInstance3D has visibility_range_end + visibility_range_end_margin greater than its global AABB center offset from the suit root plus its AABB radius and an extra safety margin. It also verifies the combined hero-suit AABB remains covered by the maximum hero visibility range.
+- Runtime quality audit passed with the AABB visibility generosity check active: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the HLOD AABB generosity pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 mesh-surface material binding pass
+
+- Continued the full model-creationmd objective. Re-read the PBR material pipeline section and inspected current material binding behavior. Found that the runtime audit accepts effective materials via MeshInstance3D surface overrides, but the spec explicitly describes applying generated materials to mesh surfaces with surface_set_material().
+- Inspection showed most hero materials are inherited from scene/material resources, while two runtime-generated hero elements still rely on overrides after mesh generation: LifeSupportHose_L/R and AstronautHead_Mesh. Preparing to move those materials onto the ArrayMesh surface itself and add runtime audit coverage for mesh-surface material assignment.
+
+- Updated /home/dexter/steam/games/the-moon/spacesuit_procedural_hose.gd so the generated ArrayMesh surface receives spacesuit_dark_rubber.tres via surface_set_material(0, material) during mesh construction and in the material restore helper, instead of relying on set_surface_override_material().
+- Updated /home/dexter/steam/games/the-moon/spacesuit_head_face_texture.gd so the runtime-generated face StandardMaterial3D is assigned to mesh.surface_set_material(0, material). The inherited scene skin override is explicitly cleared after the generated mesh-surface material is installed.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with _check_generated_mesh_surface_materials(). The audit now requires LifeSupportHose_L, LifeSupportHose_R, and AstronautHead_Mesh to have mesh-surface materials and no surface override; hoses must use spacesuit_dark_rubber.tres and the head must expose a generated Texture2D albedo through its mesh surface material.
+- The first stricter runtime audit caught the stale AstronautHead_Mesh scene override and missing effective face texture through the override path. After clearing that override in the head script, runtime quality audit passed: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the mesh-surface material pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 initialization-only procedural texture pass
+
+- Continued the full model-creationmd objective. Re-read the Dynamic Normal Map Pipeline section, especially the requirement that CPU-bound procedural normal maps be generated exclusively during _ready() initialization and then retained, instead of evaluated during active gameplay.
+- Source inspection found the spacesuit procedural texture work is currently in _ready() paths: spacesuit_quality_enhancer.gd calls _apply_material_quality() from _ready(), and the head face texture is generated in its _ready() material setup. No spacesuit script currently defines _process() or _physics_process() texture/noise generation, and no ViewportTexture/SubViewport animated texture path is used for the static suit.
+- Preparing to encode that manual inspection into /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so future changes cannot move FastNoiseLite, NoiseTexture2D, ImageTexture, or Image.create_empty work into per-frame callbacks.
+
+- Added _check_procedural_texture_source_lifecycle() to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd. The mesh audit now requires spacesuit_quality_enhancer.gd to call _apply_material_quality() from _ready(), verifies the procedural noise/albedo helpers exist, rejects ViewportTexture/SubViewport animated texture paths for the static spacesuit, and scans _process/_physics_process callback bodies for FastNoiseLite, NoiseTexture2D, ImageTexture, Image.create, create_from_image, normal_texture, and albedo_texture markers.
+- Mesh-array audit passed with the initialization-only procedural texture source guard active: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Runtime quality audit passed after the lifecycle guard pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 material-specific cellular distance pass
+
+- Continued the full model-creationmd objective. Re-read the Cellular Automata for Aerospace Fabric Simulation section and inspected current normal texture setup. Found a weak fidelity gap: all procedural normal maps use FastNoiseLite.DISTANCE_HYBRID, but the spec distinguishes soft, rounded fabric cellular distance from blockier hard-surface/joint cellular distance.
+- Preparing to make the procedural normal-map helper accept a cellular distance function per material and strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so soft fabric/stitching/rubber and hard shell/backpack panels cannot silently collapse to a single generic cellular pattern.
+
+- Updated /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd _make_noise_texture() to accept a cellular distance function. Suit fabric and seam stitching now use FastNoiseLite.DISTANCE_EUCLIDEAN for rounded quilted/soft textile cells; hard shell and backpack panel use FastNoiseLite.DISTANCE_MANHATTAN for blockier hard-surface texture; dark rubber remains FastNoiseLite.DISTANCE_HYBRID.
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd material requirements with expected cellular_distance_function values and added runtime verification against the FastNoiseLite instance inside each NoiseTexture2D.
+- Runtime quality audit passed after the material-specific cellular distance pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the material-specific cellular distance pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 runtime-generated texture resource pass
+
+- Continued the full model-creationmd objective. Re-read the procedural texturing section, which mandates avoiding uncompressed high-resolution disk textures for suit micro-detail in favor of runtime FastNoiseLite/NoiseTexture2D and generated procedural textures.
+- Current runtime audit verifies that albedo/normal textures exist and have tuned cellular settings, but it does not prove the suit fabric/hard-shell/backpack/rubber/stitching micro-detail textures are generated in memory rather than loaded from external raster resources. Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so procedural material albedo textures must be ImageTexture resources with empty resource_path and normal textures must be generated NoiseTexture2D resources with empty resource_path.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so procedural suit material albedo textures must be runtime-generated ImageTexture resources with empty resource_path, bounded to avoid oversized disk-style texture caches. Normal textures must be generated NoiseTexture2D resources with empty resource_path.
+- Runtime quality audit passed with generated texture resource checks active: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the runtime-generated texture resource pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 generated albedo weave variation pass
+
+- Continued the full model-creationmd objective. Re-read the procedural texturing and fabric micro-detail requirements. Current runtime audit proves procedural albedo textures are generated in memory, but it does not prove those generated textures contain meaningful weave/mottle variation instead of a flat color.
+- Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd by sampling generated ImageTexture pixels and requiring luminance variation/range for the procedural fabric, hard-shell, backpack, rubber, and stitching albedo maps.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd albedo checks with per-material luminance range and average-deviation thresholds. The audit now samples generated ImageTexture pixels on a 16x16 grid and fails if the procedural micro-detail reads as a flat color.
+- The first runtime audit with the new variation check exposed a real weak material: dark rubber had luminance range 0.0070 below 0.0080 and average deviation 0.0008 below 0.0020.
+- Updated /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd rubber albedo generation from variation/weave 0.035/0.010 to 0.070/0.020, giving the rubber material visible but restrained procedural mottle/detail.
+- Runtime quality audit passed after the rubber albedo variation fix: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the generated albedo weave variation pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 HLOD triangle-budget pass
+
+- Continued the full model-creationmd objective. Re-read the HLOD section, especially the requirement that the suit use separate HLOD representations at explicitly different topological fidelities. Current runtime audit proves HLOD proxy groups exist and activate at the right distances, but not that the proxy layers are actually lower-triangle representations than the hero mesh.
+- Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with hero/mid/far triangle-budget comparisons so mid HLOD must be much lighter than hero geometry and far HLOD must be lighter than mid geometry.
+
+- Added _check_hlod_triangle_budget() to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd. The runtime audit now totals triangles in hero, mid, and far MeshInstance3D layers and requires mid to be much lighter than hero, far to be lighter than mid, and far to stay lightweight relative to hero.
+- The first stricter runtime audit exposed a real HLOD issue: the far layer had 4308 triangles versus 4680 in the mid layer, so the far proxy was not meaningfully lower fidelity.
+- Updated /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd to add low-segment far HLOD helpers. Far capsules now use CapsuleMesh radial_segments=8 and rings=2, and the far helmet sphere uses radial_segments=10 and rings=5. Mid HLOD keeps the higher proxy detail.
+- Runtime quality audit passed after reducing far HLOD topology: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the HLOD triangle-budget pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 HLOD silhouette bounds pass
+
+- Continued the full model-creationmd objective. After proving HLOD triangle budgets, inspected remaining HLOD evidence. Current audits prove proxy counts, distance transitions, AABB visibility generosity, and triangle reduction, but not that mid/far proxies still cover the hero suit silhouette and asymmetrical backpack/limb extents.
+- Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd with combined AABB comparisons so both mid and far HLOD layers must cover the hero layer bounds within a small tolerance and maintain a similar center.
+
+- Added _check_hlod_silhouette_bounds() to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd. It computes combined global AABBs for hero, mid, and far layers, verifies proxy layers cover hero bounds within tolerance, checks center offsets, and rejects proxy bounds that are too shrunken or too bloated on any axis.
+- The first stricter runtime audit exposed lower-body proxy bloat: mid proxy center offset was 0.325m and far proxy center offset was 0.333m because the HLOD lower legs/boots extended far below the hero bounds.
+- Updated /home/dexter/steam/games/the-moon/spacesuit_quality_enhancer.gd mid and far HLOD lower-limb proxy positions/scales. Thighs, calves, and boots now sit higher and use shorter Y scale so the proxy silhouette tracks the actual hero suit bounds instead of inflating downward.
+- Runtime quality audit passed after HLOD silhouette adjustment: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the HLOD silhouette bounds pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 Compatibility-renderer HLOD overlap pass
+
+- Continued the full model-creationmd objective. Re-read the HLOD fade limitation section. The project at /home/dexter/steam/games/the-moon/project.godot is configured for GL Compatibility (`renderer/rendering_method="gl_compatibility"`), where Godot may silently degrade visibility-range fade. Current audits check fade mode is configured, but do not prove there is enough hard overlap if fade is unavailable.
+- Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd so HLOD transitions have measurable layer overlap around hero/mid and mid/far boundaries even in Compatibility/OpenGL mode.
+
+- Added _check_hlod_compatibility_overlap() to /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd. When ProjectSettings reports rendering/renderer/rendering_method = gl_compatibility, the runtime audit now samples hero/mid overlap at 62m, 70m, 82m, and 98m, plus mid/far overlap at 128m, 140m, and 150m. This proves HLOD ranges remain stable even if fade mode degrades.
+- Runtime quality audit passed with Compatibility-renderer HLOD overlap checks active: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Mesh-array audit passed after the Compatibility-renderer HLOD overlap pass: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 index-LOD avoidance source pass
+
+- Continued the full model-creationmd objective. Re-read the index-buffer LOD section warning about ambiguous add_surface_from_arrays(..., lods) dictionary keys and unsupported surface_get_lods extraction. Current audits forbid generate_lods(), ImporterMesh, and surface_get_lods(), and runtime HLOD is well covered, but the source audit does not explicitly prove generators avoid passing an index-LOD dictionary to add_surface_from_arrays().
+- Source inspection showed all procedural generators currently use the two-argument form array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays). Preparing to encode this so later changes cannot introduce automatic index-LOD dictionaries or extra add_surface_from_arrays arguments.
+
+- Added _check_no_index_lod_dictionary_source() to /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd. The mesh audit now scans each procedural generator's add_surface_from_arrays calls and requires the exact two-argument arrays form `add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)`. It also rejects common source markers for index-LOD dictionaries: lods, lod_dict, lod_indices, and surface_lods.
+- Mesh-array audit passed with the index-LOD avoidance source guard active: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Runtime quality audit passed after the index-LOD avoidance pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 skeletal weight-block audit pass
+
+- Continued the model-creationmd quality objective after resume. Inspecting the mesh-array audit showed _check_weight_blocks only verified that each four-weight block summed to 1.0; it did not reject negative components, components above 1.0, non-zero secondary weights, or bone/weight block count mismatches. Preparing to strengthen /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd before re-running the full verification set.
+
+- Strengthened /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd weight-block verification. It now requires matching four-bone/four-weight blocks, finite bounded weights in [0, 1], normalized sums, exactly one active influence, and primary-slot weight 1.0 for the optimized generated suit meshes.
+- Mesh-array audit passed with stricter skeletal weight checks: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=65834, SPACESUIT_TOTAL_TRIANGLES=123340, EXIT_CODE=0.
+- Runtime quality audit passed after the weight-block audit pass: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 model-creationmd requirement coverage audit
+
+- Re-read /home/dexter/godot/model-creationmd against the current spacesuit implementation and audits. The implemented model covers the required procedural ArrayMesh/SurfaceTool pipeline, typed Mesh.ARRAY_MAX arrays, indexed geometry, normals/tangents/UVs, normalized cube-sphere helmet, watertight stitched caps, Skeleton3D binding, BoneAttachment3D backpack/helmet mount points, deferred attachment sync, PBR material assignment through mesh.surface_set_material(), triplanar local mapping, runtime FastNoiseLite cellular albedo/normal textures, NoiseTexture2D normal maps, no per-frame procedural texture work, HLOD proxy layers with visibility ranges/margins, Compatibility renderer transition overlap, fitted ReflectionProbe, collision proxies, shadow casting, and guards against Godot 3/ImporterMesh/generate_lods/index-LOD dictionary misuse.
+- Verified no temporary capture/debug helper scripts remain under /home/dexter/steam.
+- Final verification state for this pass remains: mesh-array audit PASS, runtime quality audit PASS, model-viewer load has no script/resource errors with expected timeout EXIT_CODE=124.
+
+2026-06-06 knee articulation and boot sole pass
+
+- User reported that the legs do not have rotatable knees and the feet are only shells without bottom covers. Starting inspection of leg, knee, and boot procedural generators before revising the model.
+
+- Inspection found the boot generator closes toe/heel caps but has no separate flat sole or tread cover under the foot. Knee geometry has bellows ribs but no explicit horizontal hinge/axle hardware, so it does not read as rotatable. Preparing two procedural generator scripts: a skinned closed boot sole/tread mesh and a skinned horizontal knee hinge cylinder.
+
+- Added /home/dexter/steam/games/the-moon/spacesuit_procedural_boot_sole.gd, a skinned SurfaceTool/ArrayMesh sole generator with a closed sole plate and visible tread lugs. Added BootSole_L_Mesh and BootSole_R_Mesh under the boot shells, widened to cover the boot footprint.
+- Added /home/dexter/steam/games/the-moon/spacesuit_procedural_knee_hinge.gd, a skinned horizontal hinge/axle generator. Added KneeHinge_L_Mesh and KneeHinge_R_Mesh through the existing knee bellows area so the knees read as rotatable joints instead of plain ribbed fabric.
+- Updated /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd to require the new generated sole and hinge meshes and to scan the new generator scripts. Updated /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd to verify sole material/coverage/placement and knee hinge material/alignment/span. Updated collision proxy setup to include the new sole meshes.
+- Mesh-array audit passed after the knee/sole revision: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=67266, SPACESUIT_TOTAL_TRIANGLES=124964, EXIT_CODE=0.
+- Runtime quality audit passed after the knee/sole revision: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 spacesuit-3d.md revision pass
+
+- User requested revising the model according to the latest /home/dexter/godot/spacesuit-3d.md. Starting by reading the local specification and comparing it to the current generated spacesuit.
+
+- Diffed /home/dexter/godot/spacesuit-3d.md against model-creationmd. New requirements are explicit bottom faces/foot covers, Godot -Z forward offsets and clockwise front-face winding, and blended normalized weights at articulating knees/elbows. The current model already has sole covers and front -Z placement from prior revisions, but the limb generator/audit still enforce single active weight blocks, so the next revision will implement blended joint weights and update verification.
+
+- Implemented latest /home/dexter/godot/spacesuit-3d.md skeletal joint update. /home/dexter/steam/games/the-moon/spacesuit_procedural_limb_shell.gd now supports secondary_bone_index/secondary_bone_name, blend_at_top, and joint_blend_width. Joint-adjacent rings blend up to 50/50 while non-joint areas remain single-bone rigid.
+- Updated /home/dexter/steam/games/the-moon/Spacesuit3D.tscn so UpperArm/Forearm pairs blend at elbows and Thigh/Calf pairs blend at knees. This addresses the latest spec requirement that rotatable knees/elbows not remain single rigid 1.0-weight segments.
+- Updated /home/dexter/steam/tools/audit_spacesuit_mesh_arrays.gd so rigid meshes still require one active primary influence, while UpperArm/Forearm/Thigh/Calf meshes must contain normalized two-bone blend vertices with the expected secondary bone.
+- Mesh-array audit passed after the spacesuit-3d.md blended-joint revision: SPACESUIT_MESH_ARRAY_AUDIT=PASS, SPACESUIT_TOTAL_VERTICES=67266, SPACESUIT_TOTAL_TRIANGLES=124964, EXIT_CODE=0.
+- Runtime quality audit passed after the spacesuit-3d.md blended-joint revision: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS, EXIT_CODE=0.
+- Model-viewer load check produced no resource or script errors and exited by expected timeout EXIT_CODE=124.
+
+2026-06-06 floating parts and empty body render pass
+
+- User reported model.png still shows floating parts and an empty body, with the front panel not embedded in a body shell. Starting by visually inspecting /home/dexter/steam/model.png and then tracing the affected scene geometry.
+
+- Visual inspection of /home/dexter/steam/model.png confirmed the center torso reads empty: the torso shell is too short/small in the scene, so chest controls and waist hardware appear suspended. The HardTorso_Mesh generator is present, but Spacesuit3D.tscn scales it to a compact chest pod. Preparing to enlarge/lower the body shell and seat the front panel/details into the -Z torso surface.
+- Continued after resume. Confirmed a Godot model-viewer process was still running from the previous attempt and stopped it before further inspection. Preparing a focused pass on the current render complaint: floating parts, empty torso body, and chest panel embedding.
+- Patched /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd and /home/dexter/steam/games/the-moon/spacesuit_procedural_body_suit.gd to reverse the side-wall triangle winding. The torso and underlayer materials use normal backface culling, so inward-facing generated triangles can make the front body read empty even when geometry exists.
+- Inspected the refreshed /home/dexter/steam/model.png. The body shell now appears, but ChestControlPanel_Main rendered as a large black oval/void, consistent with the rounded panel front face being backface-culled. Patched /home/dexter/steam/games/the-moon/spacesuit_procedural_panel_shell.gd to reverse generated face triangle winding so the actual front panel surface renders.
+- Revised the chest control cluster in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn: scaled the main panel down, moved the hard-shell mount pad directly behind it as an embedded backing plate, and re-seated the display/lights/buttons/ports/label/caution strip on the front surface. Patched /home/dexter/steam/games/the-moon/spacesuit_procedural_equipment_pad.gd triangle winding so small rectangular controls render on their front faces instead of disappearing.
+- Reworked the panel/equipment procedural shape functions to use direct cuboid face coordinates instead of normalized cube-sphere coordinates. This preserves generated ArrayMesh controls for the audit while preventing the chest panel from inflating into an oval/capsule that visually floats over the torso.
+- Found ChestControlPanel_Main used spacesuit_backpack_panel.tres, whose albedo is nearly the same light color as the hard shell, causing the control face to vanish into the backing. Changed ChestControlPanel_Main to spacesuit_dark_rubber.tres and updated the runtime material audit expectation for that node.
+- The render showed the dark control face was hidden inside/behind the enlarged torso front. Moved the chest panel cluster forward along scene -Z so the backing intersects the torso shell and the visible controls sit on the front surface instead of being occluded.
+- Added /home/dexter/steam/games/the-moon/spacesuit_chest_panel_face.tres as a dedicated double-sided dark material for ChestControlPanel_Main. Restored the panel cluster to the audited embedded z placement and updated /home/dexter/steam/tools/audit_spacesuit_runtime_quality.gd to expect the new material.
+- Moved only the visible dark chest-panel face and its small control details slightly forward from the hard-shell backing socket. The backing remains embedded in the torso; the face needs a small proud offset to be readable in the front render.
+- Tightened ChestControlPanel_Main back by 0.002m to satisfy torso contact. Expanded HLOD_Mid_Torso/HLOD_Torso depth and moved/enlarged HLOD_Mid_ChestPanel so mid/far proxies cover the visible proud control face instead of clipping the hero silhouette.
+- Added a far HLOD_ChestPanel box proxy so the far LOD covers the embedded chest panel without over-inflating the whole torso proxy.
+- Final verification for this pass: mesh-array audit PASS; runtime quality audit PASS. Regenerated /home/dexter/steam/model.png from a private Godot viewport so it is no longer the file-manager screenshot. Removed temporary helper scripts /home/dexter/steam/capture_spacesuit_model_png.gd and /home/dexter/steam/print_cull_enum.gd. Checked for leftover Godot/model-viewer processes; none remained beyond the check command itself.
+
+2026-06-06 rotatable knee revision pass
+
+- User reported the spacesuit legs are missing rotatable knees. Starting by re-reading /home/dexter/godot/spacesuit-3d.md and inspecting current knee/leg scene nodes and procedural generators.
+- Implemented the rotatable knee revision. /home/dexter/steam/games/the-moon/spacesuit_procedural_knee_hinge.gd now supports secondary_bone_index and emits normalized 50/50 thigh-calf hinge weights when configured. Enlarged/repositioned KneeHinge_L/R in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn and added visible metal KneePivot side discs on the inner/outer sides of both knees. Updated mesh-array and runtime audits to require these pivot meshes and verify knee pivot alignment/size/span.
+- Corrected the mesh audit classification for the new KneePivot side caps: they remain required generated meshes and runtime-checked knee hardware, but are not classified as watertight pressure-shell meshes because they use the existing pad-shell cap generator.
+- Final verification for rotatable knee pass: mesh-array audit PASS with 68102 vertices and 126404 triangles; runtime quality audit PASS. Regenerated /home/dexter/steam/model.png; the front render now shows visible metal side pivot hardware at both knees. Removed the temporary capture helper and confirmed no leftover Godot/model-viewer process remains.
+
+2026-06-06 second rotatable knee visual pass
+
+- User repeated that the legs are missing rotatable knees. Treating the prior hinge/pivot work as insufficient visually. Re-checking /home/dexter/godot/spacesuit-3d.md, the latest /home/dexter/steam/model.png, and current knee geometry before revising the knee mechanism again.
+- Added front-facing rotatable knee bearing discs KneePivot_L_Front and KneePivot_R_Front so the knee rotation point is visible from the normal front render. Extended spacesuit_procedural_pad_shell.gd with optional secondary_bone_index; the new front knee bearings use normalized 50/50 thigh-calf weights. Updated mesh-array and runtime audits to require the front bearing discs and verify they sit on the forward knee face.
+- The refreshed render still made the front knee bearings too subtle. Enlarged KneePivot_L_Front and KneePivot_R_Front and moved them farther onto the forward knee face so the rotatable knee mechanism is readable from the standard front model view.
+- Found the front knee hardware was visually buried because thigh and calf shells overlapped heavily through the knee region. Shortened/raised Thigh_L/R and shortened/lowered Calf_L/R so the knee has an actual mechanical joint gap with the hinge and front bearing positioned between the two leg segments.
+- Final result for second rotatable knee visual pass: after separating the thigh/calf shell ends, /home/dexter/steam/model.png shows a clear joint break with visible metal knee bearing hardware. Mesh-array audit PASS: 68752 vertices, 127556 triangles. Runtime quality audit PASS. Removed temporary capture helper and confirmed no leftover Godot/model-viewer process beyond the check command itself.
+
+2026-06-06 torso front inward revision pass
+
+- User reported the current body protrudes outward too much and asked to move the panel and body surface inward. Starting by inspecting the current torso/front-panel transforms, procedural torso profile, and runtime contact checks before revising the front depth.
+- Reduced the procedural hard-torso front projection in /home/dexter/steam/games/the-moon/spacesuit_procedural_torso_shell.gd and moved the chest control panel stack inward in /home/dexter/steam/games/the-moon/Spacesuit3D.tscn. The goal is to keep the panel embedded while stopping the body/front module from protruding too far forward.
+- Runtime contact audit showed the first inward panel move left a 0.045m torso-front gap. Nudged the chest panel stack forward by 0.010m while keeping it substantially more inward than the previous protruding placement.
+- Corrected panel movement direction after audit feedback: less-negative Z moves the panel inward toward the flattened torso surface. Shifted the full chest control stack inward by another 0.030m.
+- Final result for torso front inward pass: reduced hard-torso front projection, moved the chest panel/control details inward to less-negative Z, regenerated /home/dexter/steam/model.png, and confirmed the temporary capture helper was removed. Verification passed: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and SPACESUIT_MESH_ARRAY_AUDIT=PASS with 68752 vertices and 127556 triangles. Stopped the leftover Godot model-viewer process and confirmed no Godot/model-viewer process remains.
+
+2026-06-06 chest panel inward revision pass
+
+- User reported the current chest panel still protrudes outward too much and asked to move only the panel inward. Keeping the torso surface unchanged and starting a focused chest-panel depth adjustment.
+- Shifted the full chest panel/control stack 0.020m inward toward less-negative Z while leaving the torso surface unchanged. This directly addresses the panel protrusion without changing the body shell again.
+- Final result for chest panel inward pass: moved only the chest panel/control stack inward by 0.020m, regenerated /home/dexter/steam/model.png, removed the temporary capture helper, and confirmed no Godot/model-viewer process remains. Verification passed: SPACESUIT_RUNTIME_QUALITY_AUDIT=PASS and SPACESUIT_MESH_ARRAY_AUDIT=PASS with 68752 vertices and 127556 triangles.
