@@ -7181,3 +7181,26 @@
 2026-06-02 17:33:56 +0800 pid=1967848 read_message waiting for header
 2026-06-02 17:33:56 +0800 pid=1967848 read_message eof before first byte
 2026-06-02 17:33:56 +0800 pid=1967848 stdin closed
+2026-06-07 14:17:42 +0800 pid=2089794 bridge start argv=['/home/dexter/.codex/mcp/godot-mcp-bridge.py'] cwd='/home/dexter/Downloads' debug_log='/home/dexter/godot/godot-mcp-bridge-debug.log'
+2026-06-07 14:17:42 +0800 pid=2089794 read_message waiting for header
+2026-06-07 14:17:42 +0800 pid=2089794 read_message first byte=b'{'
+2026-06-07 14:17:42 +0800 pid=2089794 read_message json-line bytes=200
+2026-06-07 14:17:42 +0800 pid=2089794 request id=0 method='initialize'
+2026-06-07 14:17:42 +0800 pid=2089794 response id=0 mode=json-line result_keys=['capabilities', 'protocolVersion', 'serverInfo'] error=False
+2026-06-07 14:17:42 +0800 pid=2089794 read_message waiting for header
+2026-06-07 14:17:42 +0800 pid=2089794 read_message first byte=b'{'
+2026-06-07 14:17:42 +0800 pid=2089794 read_message json-line bytes=55
+2026-06-07 14:17:42 +0800 pid=2089794 request id=None method='notifications/initialized'
+2026-06-07 14:17:42 +0800 pid=2089794 read_message waiting for header
+2026-06-07 14:17:42 +0800 pid=2089794 read_message first byte=b'{'
+2026-06-07 14:17:42 +0800 pid=2089794 read_message json-line bytes=86
+2026-06-07 14:17:42 +0800 pid=2089794 request id=1 method='tools/list'
+2026-06-07 14:17:42 +0800 pid=2089794 tools/list returning count=42 first=['godot_scene_list_nodes', 'godot_scene_get_node', 'godot_scene_get_transform', 'godot_scene_get_bounds', 'godot_scene_find_nodes']
+2026-06-07 14:17:42 +0800 pid=2089794 response id=1 mode=json-line result_keys=['nextCursor', 'tools'] error=False
+2026-06-07 14:17:42 +0800 pid=2089794 read_message waiting for header
+2026-06-07 14:26:47 +0800 pid=2089794 read_message first byte=b'{'
+2026-06-07 14:26:47 +0800 pid=2089794 read_message json-line bytes=499
+2026-06-07 14:26:47 +0800 pid=2089794 request id=2 method='tools/call'
+2026-06-07 14:26:47 +0800 pid=2089794 tools/call public_name='godot_scene_get_node' backend_name='godot_scene.get_node'
+2026-06-07 14:26:48 +0800 pid=2089794 response id=2 mode=json-line result_keys=['content'] error=False
+2026-06-07 14:26:48 +0800 pid=2089794 read_message waiting for header
