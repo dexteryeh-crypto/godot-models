@@ -1984,3 +1984,12 @@
 - Regenerated /home/dexter/steam/model-viewer-app/model_viewer.gd from the builder.
 - Strengthened /home/dexter/steam/games/the-moon/tools/audit_spaceship_model.py to require the generated model-list context menu tokens in both the viewer and builder.
 - Verification after model-list context menu pass: python3 /home/dexter/steam/games/the-moon/tools/audit_spaceship_model.py reports SPACESHIP_PYTHON_MODEL_AUDIT failures=0. Xvfb model-viewer launch with MODEL_VIEWER_DEFAULT_PATH=models/SpacemanWalkModel.tscn completed without GDScript parse or startup errors.
+
+2026-06-07 model-viewer half-speed animation pass
+
+- User requested making the movement half speed.
+- Interpreted movement as the model-viewer's auto-played imported animation movement for the walking astronaut and other animated model previews.
+- Updated /home/dexter/steam/tools/build_model_viewer.py so generated _play_first_animation sets animation_player.speed_scale = 0.5 before animation_player.play.
+- Regenerated /home/dexter/steam/model-viewer-app/model_viewer.gd from the builder. The generated viewer now loops the first animation and plays it at half speed.
+- Strengthened /home/dexter/steam/games/the-moon/tools/audit_spaceship_model.py so it requires animation_player.speed_scale = 0.5 in both the generated viewer and builder.
+- Verification after half-speed animation pass: python3 /home/dexter/steam/games/the-moon/tools/audit_spaceship_model.py reports SPACESHIP_PYTHON_MODEL_AUDIT failures=0. Xvfb model-viewer launch with MODEL_VIEWER_DEFAULT_PATH=models/SpacemanWalkModel.tscn completed without GDScript parse or startup errors.
